@@ -43,8 +43,7 @@ CREATE TABLE Invoice (
     InvoiceId TEXT PRIMARY KEY,
     InvoiceDate DATE,
     TotalAmount DECIMAL,
-    CreatedBy TEXT,
-    FOREIGN KEY (CreatedBy) REFERENCES User(Id) ON DELETE SET NULL
+    CreatedBy TEXT
 );
 
 -- Create FeeRecord table with foreign key references to Student, Invoice, and FeeStructure
