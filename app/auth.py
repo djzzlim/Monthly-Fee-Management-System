@@ -40,3 +40,7 @@ def login():
 def logout():
     logout_user()  # Log out the current user
     return redirect(url_for('main.home'))  # Redirect to home page or login page
+
+@auth.route('/forgot-password')
+def forgot_password():
+    return redirect(url_for('main.home'))
