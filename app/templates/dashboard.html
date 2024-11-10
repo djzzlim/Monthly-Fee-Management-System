@@ -35,12 +35,12 @@
                     <h2>Admin Dashboard</h2>
                 </div>
                 <div class="card-body">
-                    <p>Welcome Admin! Here you can manage the system.</p>
-                    <!-- Admin-specific content here -->
+                    <p>Welcome Admin! Here you can manage the entire school system.</p>
                     <ul>
-                        <li>Manage Users</li>
-                        <li>System Settings</li>
-                        <li>View Reports</li>
+                        <li>Manage User Roles (Admin, Accountant, Teacher, Parent)</li>
+                        <li>Configure System Settings (Fee Structures, Penalties, etc.)</li>
+                        <li>View and Generate Financial and Performance Reports</li>
+                        <li>Assign Permissions to Other Users</li>
                     </ul>
                 </div>
             </div>
@@ -51,12 +51,12 @@
                     <h2>Teacher Dashboard</h2>
                 </div>
                 <div class="card-body">
-                    <p>Welcome Teacher! Here you can view and manage your classes.</p>
-                    <!-- Teacher-specific content here -->
+                    <p>Welcome Teacher! Here you can manage your classroom and track student performance.</p>
                     <ul>
-                        <li>View Classes</li>
-                        <li>Manage Assignments</li>
-                        <li>Track Student Progress</li>
+                        <li>View Your Class List</li>
+                        <li>Track Student Grades and Attendance</li>
+                        <li>Manage Assignments and Homework Submissions</li>
+                        <li>Send Reminders to Parents about Fees and Assignments</li>
                     </ul>
                 </div>
             </div>
@@ -67,12 +67,13 @@
                     <h2>Parent Dashboard</h2>
                 </div>
                 <div class="card-body">
-                    <p>Welcome Parent! Here you can view your child's progress.</p>
-                    <!-- Parent-specific content here -->
+                    <p>Welcome Parent! Here you can monitor your child's school progress and manage fees.</p>
                     <ul>
-                        <li>View Child's Grades</li>
-                        <li>Communicate with Teachers</li>
-                        <li>Track School Events</li>
+                        <li>View Your Child's Grades and Attendance</li>
+                        <li>Pay School Fees (Online or Offline)</li>
+                        <li>Track Due Dates and Penalties for Late Payments</li>
+                        <li>Download Payment Receipts and History</li>
+                        <li>Receive Notifications on Upcoming Fees and School Events</li>
                     </ul>
                 </div>
             </div>
@@ -83,12 +84,13 @@
                     <h2>Accountant Dashboard</h2>
                 </div>
                 <div class="card-body">
-                    <p>Welcome Accountant! Here you can manage fees and invoices.</p>
-                    <!-- Accountant-specific content here -->
+                    <p>Welcome Accountant! Here you can manage fee records, generate invoices, and track payments.</p>
                     <ul>
-                        <li>View Fee Records</li>
-                        <li>Generate Invoices</li>
-                        <li>Manage Payments</li>
+                        <li>View and Update Student Fee Records</li>
+                        <li>Generate Monthly Invoices for Parents</li>
+                        <li>Track Payments and Flag Overdue Accounts</li>
+                        <li>Generate Financial Reports on Fee Collection</li>
+                        <li>Mark Fees as Paid (Online or Offline)</li>
                     </ul>
                 </div>
             </div>
@@ -96,7 +98,7 @@
         {% else %}
             <div class="alert alert-danger" role="alert">
                 <h2>Unknown Role</h2>
-                <p>Your role is not recognized. Please contact support.</p>
+                <p>Your role is not recognized. Please contact support for assistance.</p>
             </div>
         {% endif %}
     </main>

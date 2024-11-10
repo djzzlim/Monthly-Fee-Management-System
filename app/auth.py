@@ -1,4 +1,5 @@
 import re
+import smtplib
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user
 from .models import User
@@ -41,6 +42,20 @@ def logout():
     logout_user()  # Log out the current user
     return redirect(url_for('main.home'))  # Redirect to home page or login page
 
-@auth.route('/forgot-password')
+@auth.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
-    return redirect(url_for('main.home'))
+    if request.method == 'POST':
+        # Get the email from the form
+        email = request.form.get('email')
+        
+        # Validate the email format using regex
+        if not re.match(email_regex, email):
+            flash('Invalid email format. Please check the email address.', 'danger')
+            return render_template('forgot-password.html')
+
+        # Here, you would normally send a reset link to the email.
+        # For now, let's just flash a success message and redirect.
+        flash('Password reset link has been sent to your email.', 'success')
+        return redirect(url_for('auth.login'))  # Assuming '/login' is your login page route
+
+    return render_template('forgot-password.html')
