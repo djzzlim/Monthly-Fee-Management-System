@@ -37,10 +37,9 @@
                 <div class="card-body">
                     <p>Welcome Admin! Here you can manage the entire school system.</p>
                     <ul>
-                        <li>Manage User Roles (Admin, Accountant, Teacher, Parent)</li>
-                        <li>Configure System Settings (Fee Structures, Penalties, etc.)</li>
-                        <li>View and Generate Financial and Performance Reports</li>
-                        <li>Assign Permissions to Other Users</li>
+                        <li><a href="{{ url_for('admin.manage_users') }}">Manage User Roles</a></li>
+                        <li><a href="{{ url_for('admin.system_settings') }}">System Settings</a></li>
+                        <li><a href="{{ url_for('admin.reports') }}">Generate Reports</a></li>
                     </ul>
                 </div>
             </div>
@@ -53,10 +52,8 @@
                 <div class="card-body">
                     <p>Welcome Teacher! Here you can manage your classroom and track student performance.</p>
                     <ul>
-                        <li>View Your Class List</li>
-                        <li>Track Student Grades and Attendance</li>
-                        <li>Manage Assignments and Homework Submissions</li>
-                        <li>Send Reminders to Parents about Fees and Assignments</li>
+                        <li><a href="{{ url_for('teacher.student_fees') }}">View Student Fees</a></li>
+                        <li><a href="{{ url_for('teacher.send_reminders') }}">Send Reminders</a></li>
                     </ul>
                 </div>
             </div>
@@ -69,11 +66,9 @@
                 <div class="card-body">
                     <p>Welcome Parent! Here you can monitor your child's school progress and manage fees.</p>
                     <ul>
-                        <li>View Your Child's Grades and Attendance</li>
-                        <li>Pay School Fees (Online or Offline)</li>
-                        <li>Track Due Dates and Penalties for Late Payments</li>
-                        <li>Download Payment Receipts and History</li>
-                        <li>Receive Notifications on Upcoming Fees and School Events</li>
+                        <li><a href="{{ url_for('parent.fee_details') }}">View Fee Details</a></li>
+                        <li><a href="{{ url_for('parent.payment_history') }}">Payment History</a></li>
+                        <li><a href="{{ url_for('parent.make_payment') }}">Make Payment</a></li>
                     </ul>
                 </div>
             </div>
@@ -86,11 +81,9 @@
                 <div class="card-body">
                     <p>Welcome Accountant! Here you can manage fee records, generate invoices, and track payments.</p>
                     <ul>
-                        <li>View and Update Student Fee Records</li>
-                        <li>Generate Monthly Invoices for Parents</li>
-                        <li>Track Payments and Flag Overdue Accounts</li>
-                        <li>Generate Financial Reports on Fee Collection</li>
-                        <li>Mark Fees as Paid (Online or Offline)</li>
+                        <li><a href="{{ url_for('accounting.manage_fees') }}">Manage Fees</a></li>
+                        <li><a href="{{ url_for('accounting.generate_invoices') }}">Generate Invoices</a></li>
+                        <li><a href="{{ url_for('accounting.payment_reports') }}">Payment Reports</a></li>
                     </ul>
                 </div>
             </div>

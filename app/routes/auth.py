@@ -2,7 +2,7 @@ import re
 import smtplib
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user
-from .models import User
+from app.models.models import User
 
 auth = Blueprint('auth', __name__)
 

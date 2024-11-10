@@ -19,11 +19,19 @@ def create_app():
     login_manager.login_view = 'auth.login'  # Redirect to login if not logged in
 
     # Import routes
-    from .routes import main
-    from .auth import auth
+    from .routes.routes import main
+    from .routes.auth import auth
+    from .routes.admin_routes import admin
+    from .routes.accounting_routes import accounting
+    from .routes.education_routes import education
+    from .routes.parent_routes import parent
 
     app.register_blueprint(main)
     app.register_blueprint(auth)
+    app.register_blueprint(admin, url_prefix='/admin')
+    app.register_blueprint(accounting, url_prefix='/accounting')
+    app.register_blueprint(education, url_prefix='/education')
+    app.register_blueprint(parent, url_prefix='/parent')
 
     with app.app_context():
         db.create_all()  # Call with parentheses to create tables
@@ -33,5 +41,5 @@ def create_app():
 # Define the user_loader function globally
 @login_manager.user_loader
 def load_user(user_id):
-    from .models import User  # Import here to avoid circular import
+    from app.models.models import User  # Import here to avoid circular import
     return User.query.get(user_id)
