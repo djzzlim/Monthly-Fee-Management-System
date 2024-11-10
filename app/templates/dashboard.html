@@ -2,12 +2,115 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <!-- Include Bootstrap 5 CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> <!-- Your custom CSS -->
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to My Flask App</h1>
-    </div>
+
+    <!-- Header (Common to all users) -->
+    <header class="bg-primary text-white p-3">
+        <div class="container">
+            <h1>Welcome to the Dashboard</h1>
+            <nav>
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{{ url_for('main.home') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{{ url_for('auth.logout') }}">Logout</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container my-5">
+        <!-- Conditionally display content based on user role -->
+        {% if current_user.role_id == '1' %}
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h2>Admin Dashboard</h2>
+                </div>
+                <div class="card-body">
+                    <p>Welcome Admin! Here you can manage the system.</p>
+                    <!-- Admin-specific content here -->
+                    <ul>
+                        <li>Manage Users</li>
+                        <li>System Settings</li>
+                        <li>View Reports</li>
+                    </ul>
+                </div>
+            </div>
+
+        {% elif current_user.role_id == '2' %}
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h2>Teacher Dashboard</h2>
+                </div>
+                <div class="card-body">
+                    <p>Welcome Teacher! Here you can view and manage your classes.</p>
+                    <!-- Teacher-specific content here -->
+                    <ul>
+                        <li>View Classes</li>
+                        <li>Manage Assignments</li>
+                        <li>Track Student Progress</li>
+                    </ul>
+                </div>
+            </div>
+
+        {% elif current_user.role_id == '3' %}
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h2>Parent Dashboard</h2>
+                </div>
+                <div class="card-body">
+                    <p>Welcome Parent! Here you can view your child's progress.</p>
+                    <!-- Parent-specific content here -->
+                    <ul>
+                        <li>View Child's Grades</li>
+                        <li>Communicate with Teachers</li>
+                        <li>Track School Events</li>
+                    </ul>
+                </div>
+            </div>
+
+        {% elif current_user.role_id == '4' %}
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h2>Accountant Dashboard</h2>
+                </div>
+                <div class="card-body">
+                    <p>Welcome Accountant! Here you can manage fees and invoices.</p>
+                    <!-- Accountant-specific content here -->
+                    <ul>
+                        <li>View Fee Records</li>
+                        <li>Generate Invoices</li>
+                        <li>Manage Payments</li>
+                    </ul>
+                </div>
+            </div>
+
+        {% else %}
+            <div class="alert alert-danger" role="alert">
+                <h2>Unknown Role</h2>
+                <p>Your role is not recognized. Please contact support.</p>
+            </div>
+        {% endif %}
+    </main>
+
+    <!-- Footer (Common to all users) -->
+    <footer class="bg-dark text-white py-3 fixed-bottom footer">
+        <div class="container text-center">
+            <p>&copy; 2024 School Management System</p>
+        </div>
+    </footer>
+
+    <!-- Include Bootstrap 5 JS and Popper.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
 </body>
 </html>

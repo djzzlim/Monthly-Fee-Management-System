@@ -1,4 +1,5 @@
 from . import db
+from flask_login import UserMixin
 from sqlalchemy.orm import relationship
 
 # Role model
@@ -74,14 +75,14 @@ class FeeRecord(db.Model):
     created_by_user = relationship('User', back_populates='created_fee_records')
 
 # User model
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'User'
     id = db.Column('Id', db.String, primary_key=True)
     username = db.Column('Username', db.String, nullable=False)
     password = db.Column('Password', db.String, nullable=False)
     role_id = db.Column('RoleId', db.String, db.ForeignKey('Role.Id', ondelete='SET NULL'))
     email = db.Column('Email', db.String, nullable=False)
-    
-    # Relationships
-    role = relationship('Role', back_populates='users')
+
+    # Relationship
+    role = db.relationship('Role', back_populates='users')
     created_fee_records = relationship('FeeRecord', back_populates='created_by_user')
