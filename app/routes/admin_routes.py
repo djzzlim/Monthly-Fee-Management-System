@@ -31,10 +31,10 @@ def reports():
 @login_required
 def add_user():
     if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']  # Use the password directly without hashing
-        role_id = request.form['role_id']
+        username = request.form('username')
+        email = request.form('email')
+        password = request.form('password')  # Use the password directly without hashing
+        role_id = request.form('role_id')
 
         # Check if the user already exists based on the email (optional, but good practice)
         existing_user = User.query.filter_by(email=email).first()
@@ -63,8 +63,11 @@ def edit_user(user_id):
         # Handle form submission for editing user (updating user info)
         user.username = request.form['username']
         user.email = request.form['email']
-        user.password = request.form['password']  # Ensure to hash the password
         user.role_id = request.form['role_id']
+
+        new_password = request.form['password']
+        if new_password:
+            user.password = new_password
         
         db.session.commit()
         flash('User updated successfully!', 'success')
