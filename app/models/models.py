@@ -79,6 +79,7 @@ class User(UserMixin, db.Model):
     __tablename__ = 'User'
     id = db.Column('Id', db.String, primary_key=True)
     username = db.Column('Username', db.String, nullable=False)
+    name = db.Column('Name', db.String, nullable=False)
     password = db.Column('Password', db.String, nullable=False)
     role_id = db.Column('RoleId', db.String, db.ForeignKey('Role.Id', ondelete='SET NULL'))
     email = db.Column('Email', db.String, nullable=False)

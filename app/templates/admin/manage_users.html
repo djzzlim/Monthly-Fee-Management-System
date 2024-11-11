@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users</title>
+    <link rel="icon" href="{{ url_for('static', filename='kuman.ico') }}" type="image/x-icon">
+    <!-- Include Bootstrap 5 CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .custom-container {
+            max-width: 1000px; /* Set the max width to your preferred value */
+            margin: 0 auto; /* Center the content horizontally */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header (Common to all users) -->
+    <header class="bg-primary text-white p-3">
+        <div class="container">
+            <h1>Welcome to the Admin Dashboard</h1>
+            <nav>
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{{ url_for('main.dashboard') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{{ url_for('auth.logout') }}">Logout</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="custom-container my-5">
+        <!-- Admin User Management Section -->
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h2>Manage Users</h2>
+            </div>
+            <div class="card-body">
+                <p>Welcome Admin! Here you can manage user accounts in the system.</p>
+                
+                <div class="mb-4">
+                    <a href="{{ url_for('admin.add_user') }}" class="btn btn-success">Add New User</a>
+                </div>
+
+                <!-- User Management Table (Made responsive) -->
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.role.role_name }}</td>
+                                    <td>
+                                        <!-- Edit User Form -->
+                                        <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-warning btn-sm">Edit</a>
+
+                                        <!-- Delete User Form -->
+                                        <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer (Common to all users) -->
+    <footer class="bg-dark text-white py-3 fixed-bottom footer">
+        <div class="container text-center">
+            <p>&copy; 2024 School Management System</p>
+        </div>
+    </footer>
+
+    <!-- Include Bootstrap 5 JS and Popper.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+</body>
+</html>
