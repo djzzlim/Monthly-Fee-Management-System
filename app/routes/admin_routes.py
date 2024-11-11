@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from app import db  # Importing db from the app package
 from app.models.models import User, Role  # Import User and Role models from the models module
+from sqlalchemy import func
+import uuid
 
 # Create the admin blueprint
 admin = Blueprint('admin', __name__)
@@ -31,19 +33,22 @@ def reports():
 @login_required
 def add_user():
     if request.method == 'POST':
-        username = request.form('username')
-        email = request.form('email')
-        password = request.form('password')  # Use the password directly without hashing
-        role_id = request.form('role_id')
+        name = request.form.get('name')
+        email = request.form.get('email')
+        password = request.form.get('password')  # Ensure to hash the password in production
+        role_id = request.form.get('role')
 
-        # Check if the user already exists based on the email (optional, but good practice)
+        # Check if the user already exists based on the email
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             flash('User with this email already exists!', 'danger')
             return redirect(url_for('admin.add_user'))
 
-        # Create a new user and save to the database
-        new_user = User(username=username, email=email, password=password, role_id=role_id)
+        # Generate a new UUID for the user ID
+        user_id = str(uuid.uuid4())
+
+        # Create a new user with the generated UUID
+        new_user = User(id=user_id, name=name, email=email, password=password, role_id=role_id)
         db.session.add(new_user)
         db.session.commit()
 
@@ -61,7 +66,7 @@ def edit_user(user_id):
     
     if request.method == 'POST':
         # Handle form submission for editing user (updating user info)
-        user.username = request.form['username']
+        user.name = request.form['name']
         user.email = request.form['email']
         user.role_id = request.form['role_id']
 
