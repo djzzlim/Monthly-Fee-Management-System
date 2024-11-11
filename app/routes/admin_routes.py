@@ -33,7 +33,8 @@ def reports():
 @login_required
 def add_user():
     if request.method == 'POST':
-        name = request.form.get('name')
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
         email = request.form.get('email')
         password = request.form.get('password')  # Ensure to hash the password in production
         role_id = request.form.get('role')
@@ -48,11 +49,10 @@ def add_user():
         user_id = str(uuid.uuid4())
 
         # Create a new user with the generated UUID
-        new_user = User(id=user_id, name=name, email=email, password=password, role_id=role_id)
+        new_user = User(id=user_id, first_name=first_name, last_name=last_name, email=email, password=password, role_id=role_id)
         db.session.add(new_user)
         db.session.commit()
 
-        flash('New user added successfully!', 'success')
         return redirect(url_for('admin.manage_users'))
 
     roles = Role.query.all()  # Fetch available roles
@@ -64,22 +64,36 @@ def edit_user(user_id):
     # Fetch user by ID (now a string)
     user = User.query.filter_by(id=user_id).first_or_404()  # Use filter_by to query by string ID
     
+    # Fetch roles for the dropdown menu
+    roles = Role.query.all()
+
     if request.method == 'POST':
         # Handle form submission for editing user (updating user info)
-        user.name = request.form['name']
+        user.first_name = request.form['first_name']
+        user.last_name = request.form['last_name']
         user.email = request.form['email']
         user.role_id = request.form['role_id']
 
         new_password = request.form['password']
-        if new_password:
-            user.password = new_password
         
+        # Check if the role is "student" (adjust this if your student role has a different ID)
+        if user.role_id == '4':
+            user.password = None
+        elif new_password:
+            user.password = new_password
+
+        # Check if the email already exists for another user
+        existing_user = User.query.filter_by(email=user.email).first()
+        if existing_user and existing_user.id != user.id:
+            flash('User with this email already exists!', 'danger')
+            return redirect(url_for('admin.edit_user', user_id=user.id, roles=roles))
+        
+        # Commit changes to the database
         db.session.commit()
-        flash('User updated successfully!', 'success')
         return redirect(url_for('admin.manage_users'))
 
-    roles = Role.query.all()  # Assuming you have a Role model for user roles
     return render_template('admin/edit_user.html', user=user, roles=roles)
+
 
 @admin.route('/delete_user/<string:user_id>', methods=['POST'])
 @login_required
@@ -91,5 +105,4 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
 
-    flash('User deleted successfully!', 'success')
     return redirect(url_for('admin.manage_users'))

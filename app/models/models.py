@@ -2,6 +2,8 @@ from app import db
 from flask_login import UserMixin
 from sqlalchemy.orm import relationship
 from uuid import uuid4
+from sqlalchemy import Numeric, Date, String, ForeignKey, Column
+import uuid
 
 # Role model
 class Role(db.Model):
@@ -12,29 +14,44 @@ class Role(db.Model):
     # Relationship
     users = relationship('User', back_populates='role')
 
-# Parent model
-class Parent(db.Model):
-    __tablename__ = 'Parent'
-    id = db.Column('Id', db.String, primary_key=True)
-    name = db.Column('Name', db.String, nullable=False)
-    email = db.Column('Email', db.String, nullable=False)
-    phone_num = db.Column('PhoneNum', db.Integer, nullable=False)
-    
-    # Relationship
-    students = relationship('Student', back_populates='parent', cascade="all, delete-orphan")
 
-# Student model
-class Student(db.Model):
-    __tablename__ = 'Student'
-    id = db.Column('Id', db.String, primary_key=True)
+# User model
+class User(UserMixin, db.Model):
+    __tablename__ = 'User'
+    id = db.Column('Id', db.String, primary_key=True, default=lambda: str(uuid4()))
+    password = db.Column('Password', db.String, nullable=True)
+    role_id = db.Column('RoleId', db.String, ForeignKey('Role.Id', ondelete='SET NULL'))
+    email = db.Column('Email', db.String, nullable=False)
     first_name = db.Column('FirstName', db.String, nullable=False)
     last_name = db.Column('LastName', db.String, nullable=False)
-    date_of_birth = db.Column('DateOfBirth', db.Date, nullable=False)
-    parent_id = db.Column('ParentId', db.String, db.ForeignKey('Parent.Id', ondelete='CASCADE'), nullable=False)
-    
+    date_of_birth = db.Column('DateOfBirth', db.Date, nullable=True)
+
     # Relationships
-    parent = relationship('Parent', back_populates='students')
-    fee_records = relationship('FeeRecord', back_populates='student', cascade="all, delete-orphan")
+    role = relationship('Role', back_populates='users')
+    created_fee_records = db.relationship('FeeRecord', 
+                                          foreign_keys='FeeRecord.created_by',  # Referencing FeeRecord.created_by
+                                          backref='creator')
+    invoices = relationship('Invoice', back_populates='created_by_user')
+    parent_students = relationship('ParentStudent', 
+                                   foreign_keys='[ParentStudent.parent_id]', 
+                                   back_populates='parent', 
+                                   cascade="all, delete-orphan")
+    student_parents = relationship('ParentStudent', 
+                                   foreign_keys='[ParentStudent.student_id]', 
+                                   back_populates='student', 
+                                   cascade="all, delete-orphan")
+
+
+# ParentStudent association table
+class ParentStudent(db.Model):
+    __tablename__ = 'ParentStudent'
+    parent_id = db.Column('ParentId', db.String, ForeignKey('User.Id', ondelete='CASCADE'), primary_key=True)
+    student_id = db.Column('StudentId', db.String, ForeignKey('User.Id', ondelete='CASCADE'), primary_key=True)
+
+    # Relationships
+    parent = relationship('User', foreign_keys=[parent_id], back_populates='parent_students')
+    student = relationship('User', foreign_keys=[student_id], back_populates='student_parents')
+
 
 # FeeStructure model
 class FeeStructure(db.Model):
@@ -46,44 +63,35 @@ class FeeStructure(db.Model):
     # Relationship
     fee_records = relationship('FeeRecord', back_populates='fee_structure')
 
+
 # Invoice model
 class Invoice(db.Model):
     __tablename__ = 'Invoice'
     invoice_id = db.Column('InvoiceId', db.String, primary_key=True)
     invoice_date = db.Column('InvoiceDate', db.Date, nullable=False)
     total_amount = db.Column('TotalAmount', db.Numeric, nullable=False)
-    created_by = db.Column('CreatedBy', db.String, db.ForeignKey('User.Id', ondelete='SET NULL'))
+    created_by = db.Column('CreatedBy', db.String, ForeignKey('User.Id', ondelete='SET NULL'))
     
-    # Relationship
+    # Relationships
     fee_records = relationship('FeeRecord', back_populates='invoice')
+    created_by_user = relationship('User', back_populates='invoices')
+
 
 # FeeRecord model
 class FeeRecord(db.Model):
     __tablename__ = 'FeeRecord'
     fee_id = db.Column('FeeId', db.String, primary_key=True)
-    student_id = db.Column('StudentId', db.String, db.ForeignKey('Student.Id', ondelete='CASCADE'), nullable=False)
+    student_id = db.Column('StudentId', db.String, ForeignKey('User.Id', ondelete='CASCADE'), nullable=False)
     amount_due = db.Column('AmountDue', db.Numeric, nullable=False)
     amount_paid = db.Column('AmountPaid', db.Numeric, nullable=False)
     due_date = db.Column('DueDate', db.Date, nullable=False)
-    invoice_id = db.Column('InvoiceId', db.String, db.ForeignKey('Invoice.InvoiceId', ondelete='SET NULL'))
-    structure_id = db.Column('StructureId', db.String, db.ForeignKey('FeeStructure.StructureId'))
-    created_by = db.Column('CreatedBy', db.String, db.ForeignKey('User.Id', ondelete='SET NULL'))
+    invoice_id = db.Column('InvoiceId', db.String, ForeignKey('Invoice.InvoiceId', ondelete='SET NULL'))
+    structure_id = db.Column('StructureId', db.String, ForeignKey('FeeStructure.StructureId'))
+    created_by = db.Column('CreatedBy', db.String, ForeignKey('User.Id', ondelete='SET NULL'))  # This links back to User
     
     # Relationships
-    student = relationship('Student', back_populates='fee_records')
     invoice = relationship('Invoice', back_populates='fee_records')
     fee_structure = relationship('FeeStructure', back_populates='fee_records')
-    created_by_user = relationship('User', back_populates='created_fee_records')
-
-# User model
-class User(UserMixin, db.Model):
-    __tablename__ = 'User'
-    id = db.Column('Id', db.String, primary_key=True, default=lambda: str(uuid4()))  # Generate UUIDs as strings
-    name = db.Column('Name', db.String, nullable=False)
-    password = db.Column('Password', db.String, nullable=False)
-    role_id = db.Column('RoleId', db.String, db.ForeignKey('Role.Id', ondelete='SET NULL'))
-    email = db.Column('Email', db.String, nullable=False)
-
-    # Relationship
-    role = db.relationship('Role', back_populates='users')
-    created_fee_records = relationship('FeeRecord', back_populates='created_by_user')
+    
+    # Specify the foreign key for the relationship with User
+    created_by_user = relationship('User', back_populates='created_fee_records', foreign_keys=[created_by])  # Explicit foreign key

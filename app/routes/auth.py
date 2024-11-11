@@ -24,6 +24,12 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user:  # Check if user exists
+            # Check if the user has a role ID of '4' (Student)
+            if user.role_id == '4':
+                flash('Students are not allowed to log in.', 'danger')
+                return render_template('login.html')
+
+            # Verify password if role ID is not '4'
             if password == user.password:  # Check if passwords match
                 login_user(user)  # Log in the user
 

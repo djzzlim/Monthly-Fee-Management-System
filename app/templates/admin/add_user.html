@@ -51,8 +51,13 @@
                 <!-- Add User Form -->
                 <form action="{{ url_for('admin.add_user') }}" method="post">
                     <div class="mb-3">
-                        <label for="name" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                        <label for="first_name" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" required>
                     </div>
 
                     <div class="mb-3">
@@ -62,14 +67,14 @@
 
                     <div class="mb-3">
                         <label for="role" class="form-label">Role</label>
-                        <select class="form-control" id="role" name="role" required>
+                        <select class="form-control" id="role" name="role" required onchange="togglePasswordField()">
                             {% for role in roles %}
                                 <option value="{{ role.id }}">{{ role.role_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3" id="password-field">
                         <label for="password" class="form-label">Password</label>
                         <input type="password" class="form-control" id="password" name="password" required>
                     </div>
@@ -91,6 +96,25 @@
     <!-- Include Bootstrap 5 JS and Popper.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+    <script>
+        function togglePasswordField() {
+            const roleSelect = document.getElementById('role');
+            const passwordField = document.getElementById('password-field');
+            
+            // Hide password field if role id is "4" (for students)
+            if (roleSelect.value === '4') {
+                passwordField.style.display = 'none';
+                document.getElementById('password').removeAttribute('required');
+            } else {
+                passwordField.style.display = 'block';
+                document.getElementById('password').setAttribute('required', 'required');
+            }
+        }
+
+        // Initialize function to set the field display on page load
+        document.addEventListener("DOMContentLoaded", togglePasswordField);
+    </script>
 
 </body>
 </html>
