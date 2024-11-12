@@ -39,12 +39,16 @@ def add_user():
         email = request.form.get('email')
         password = request.form.get('password')
         role_id = request.form.get('role')
-        date_of_birth = request.form.get('date_of_birth')  # Fetch date of birth
+        date_of_birth_str = request.form.get('date_of_birth')  # Fetch date of birth as string
 
+        # Check if the user already exists
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             flash('User with this email already exists!', 'danger')
             return redirect(url_for('admin.add_user'))
+
+        # Convert date_of_birth from string to date
+        date_of_birth = datetime.strptime(date_of_birth_str, '%Y-%m-%d').date() if date_of_birth_str else None
 
         user_id = str(uuid.uuid4())
         new_user = User(
@@ -54,8 +58,9 @@ def add_user():
             email=email,
             password=password,
             role_id=role_id,
-            date_of_birth=date_of_birth  # Save date of birth
+            date_of_birth=date_of_birth  # Pass the date object to the database
         )
+        
         db.session.add(new_user)
         db.session.commit()
 
