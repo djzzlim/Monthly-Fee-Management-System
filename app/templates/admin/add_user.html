@@ -7,6 +7,13 @@
     <link rel="icon" href="{{ url_for('static', filename='kuman.ico') }}" type="image/x-icon">
     <!-- Include Bootstrap 5 CSS from CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .custom-container {
+            max-width: 1000px; /* Set the max width to your preferred value */
+            margin: 0 auto; /* Center the content horizontally */
+            padding-bottom: 50px; /* Prevent content overlap with footer */
+        }
+    </style>
 </head>
 <body>
 
@@ -27,7 +34,8 @@
         </div>
     </header>
 
-    <main class="container my-5">
+    <!-- Main Content -->
+    <main class="custom-container my-5">
         <div class="card">
             <div class="card-header bg-danger text-white">
                 <h2>Add New User</h2>
@@ -66,6 +74,11 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="date_of_birth" class="form-label">Date of Birth</label>
+                        <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="role" class="form-label">Role</label>
                         <select class="form-control" id="role" name="role" required onchange="togglePasswordField()">
                             {% for role in roles %}
@@ -74,6 +87,7 @@
                         </select>
                     </div>
 
+                    <!-- Password Field (toggles based on role) -->
                     <div class="mb-3" id="password-field">
                         <label for="password" class="form-label">Password</label>
                         <input type="password" class="form-control" id="password" name="password" required>
@@ -87,7 +101,7 @@
     </main>
 
     <!-- Footer (Common to all users) -->
-    <footer class="bg-dark text-white py-3 fixed-bottom footer">
+    <footer class="bg-dark text-white py-3 footer">
         <div class="container text-center">
             <p>&copy; 2024 School Management System</p>
         </div>
@@ -103,7 +117,7 @@
             const passwordField = document.getElementById('password-field');
             
             // Hide password field if role id is "4" (for students)
-            if (roleSelect.value === '4') {
+            if (roleSelect.value === '4') { 
                 passwordField.style.display = 'none';
                 document.getElementById('password').removeAttribute('required');
             } else {

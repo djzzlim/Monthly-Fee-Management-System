@@ -7,17 +7,24 @@
     <link rel="icon" href="{{ url_for('static', filename='kuman.ico') }}" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .container-custom {
-            max-width: 600px;
+        .custom-container {
+            max-width: 1000px;
             margin: 0 auto;
+        }
+
+        .custom-container1 {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding-bottom: 50px;
         }
     </style>
 </head>
 <body>
 
+    <!-- Header (Common to all users) -->
     <header class="bg-primary text-white p-3">
-        <div class="container-custom">
-            <h1>Edit User</h1>
+        <div class="container">
+            <h1>Welcome to the Admin Dashboard</h1>
             <nav>
                 <ul class="nav">
                     <li class="nav-item">
@@ -31,7 +38,8 @@
         </div>
     </header>
 
-    <main class="container-custom my-5">
+    <main class="custom-container1 my-5">
+        <!-- Admin Edit User Section -->
         <div class="card">
             <div class="card-header bg-danger text-white">
                 <h2>Edit User Details</h2>
@@ -51,6 +59,12 @@
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                    </div>
+
+                    <!-- Date of Birth Field -->
+                    <div class="mb-3">
+                        <label for="date_of_birth" class="form-label">Date of Birth</label>
+                        <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ user.date_of_birth|default('') }}" required>
                     </div>
 
                     <div class="mb-3">
@@ -78,7 +92,8 @@
         </div>
     </main>
 
-    <footer class="bg-dark text-white py-3 fixed-bottom footer">
+    <!-- Footer (Common to all users) -->
+    <footer class="bg-dark text-white py-3 footer">
         <div class="container text-center">
             <p>&copy; 2024 School Management System</p>
         </div>
