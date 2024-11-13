@@ -18,9 +18,15 @@ def manage_users():
     return render_template('admin/manage_users.html', users=users)
 
 # Route to manage system settings (empty for now)
-@admin.route('/system_settings')
+@admin.route('/system_settings', methods=['GET', 'POST'])
 @login_required
 def system_settings():
+    return render_template('admin/system_settings.html')
+
+# Route to manage system settings (empty for now)
+@admin.route('/update_settings', methods=['GET', 'POST'])
+@login_required
+def update_settings():
     return render_template('admin/system_settings.html')
 
 # Route to view reports (empty for now)
