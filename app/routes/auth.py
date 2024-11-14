@@ -25,7 +25,7 @@ def login():
 
         if user:  # Check if user exists
             # Check if the user has a role ID of '4' (Student)
-            if user.role_id == '4':
+            if user.role_id == '5':
                 flash('Students are not allowed to log in.', 'danger')
                 return render_template('login.html')
 

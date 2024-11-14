@@ -104,16 +104,27 @@
 
     <script>
     function togglePasswordField() {
-        const roleSelect = document.getElementById('role');
-        const passwordField = document.getElementById('password-field');
+    const roleSelect = document.getElementById('role');
+    const passwordField = document.getElementById('password-field');
+    const passwordInput = document.getElementById('password');
+    const currentRoleId = "{{ user.role_id }}"; // Get the current role ID from the server
 
-        // Hide password field if the role ID is '4' (for students)
-        if (roleSelect.value === '4') { // Replace '4' with the actual student role ID
-            passwordField.style.display = 'none';
-        } else {
-            passwordField.style.display = 'block';
-        }
+    // If the selected role is '5' (e.g., Student), hide the password field
+    if (roleSelect.value === '5') {
+        passwordField.style.display = 'none';
+        passwordInput.removeAttribute("required"); // Ensure password is not required
     }
+    // If the current role is '5' (e.g., Student) and changing to a different role
+    else if (currentRoleId === '5' && roleSelect.value !== '5') {
+        passwordField.style.display = 'block';
+        passwordInput.setAttribute("required", "required"); // Make password required
+    }
+    // For other cases, show the password field but don’t make it required
+    else {
+        passwordField.style.display = 'block';
+        passwordInput.removeAttribute("required"); // Ensure password is optional
+    }
+}
 
         // Initialize function to set the field display on page load
         document.addEventListener("DOMContentLoaded", togglePasswordField);
