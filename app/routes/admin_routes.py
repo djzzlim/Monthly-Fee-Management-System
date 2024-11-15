@@ -42,13 +42,21 @@ def update_settings():
             # Loop through settings and update their values based on form input
             for setting in settings:
                 form_value = request.form.get(setting.setting_key)
-                
+
                 # Handle checkbox logic separately (checkboxes may or may not be included in the form submission)
                 if form_value is not None:
                     if form_value == 'on':  # Checkbox is checked, set to '1'
                         setting.setting_value = '1'
                     else:
-                        setting.setting_value = form_value
+                        # Special handling for specific settings
+                        if setting.setting_key == 'late_fee_amount':
+                            # Convert to float, round to 2 decimal places, and convert back to string
+                            setting.setting_value = str(round(float(form_value), 2))
+                        elif setting.setting_key == 'telegram_bot_api_key' and form_value.strip() == '':
+                            # If the Telegram Bot API key is empty, set it to NULL
+                            setting.setting_value = None
+                        else:
+                            setting.setting_value = form_value
                 else:
                     # If form_value is None, this means the checkbox is unchecked, set it to '0' (or default value)
                     if setting.setting_key in ['email_notifications', 'sms_notifications', 'two_factor_auth']:
@@ -57,7 +65,8 @@ def update_settings():
             # Commit the changes to the database
             db.session.commit()
 
-            # Redirect to the dashboard
+            # Redirect to the dashboard with a success message
+            flash('Settings updated successfully!', 'success')
             return redirect(url_for('main.dashboard'))
 
         except Exception as e:
@@ -65,7 +74,8 @@ def update_settings():
             flash(f'An error occurred while updating the settings: {str(e)}', 'danger')
 
     # If it's a GET request, or in case of an error, stay on the settings page
-    return render_template('admin/system_settings.html', settings=Settings.query.first())
+    return render_template('admin/system_settings.html', settings=Settings.query.all())
+
 
 # Route to view reports (empty for now)
 @admin.route('/reports')

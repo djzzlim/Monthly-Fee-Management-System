@@ -88,8 +88,11 @@
                         <!-- Other Settings -->
                         <tr><th colspan="2"><h4>Fee Settings</h4></th></tr>
                         <tr>
-                            <td><label for="late_fee_rate" class="form-label">Late Fee Rate (%)</label></td>
-                            <td><input type="number" class="form-control" id="late_fee_rate" name="late_fee_rate" value="{{ settings['late_fee_rate'] }}" min="0" required></td>
+                            <td><label for="late_fee_amount" class="form-label">Late Fee Amount</label></td>
+                            <td>
+                                <input type="number" class="form-control" id="late_fee_amount" name="late_fee_amount" 
+                                       value="{{ '%.2f' % (settings['late_fee_amount'] | float) }}" min="0" step="0.01" required>
+                            </td>
                         </tr>
                         <tr>
                             <td><label for="due_date_reminder" class="form-label">Due Date Reminder (Days)</label></td>
@@ -103,8 +106,15 @@
                             <td><input type="checkbox" class="form-check-input" id="email_notifications" name="email_notifications" {% if settings['email_notifications'] == '1' %}checked{% endif %}></td>
                         </tr>
                         <tr>
-                            <td><label for="sms_notifications" class="form-check-label">Enable SMS Notifications</label></td>
-                            <td><input type="checkbox" class="form-check-input" id="sms_notifications" name="sms_notifications" {% if settings['sms_notifications'] == '1' %}checked{% endif %}></td>
+                            <td><label for="telegram_notifications" class="form-check-label">Enable Telegram Notifications</label></td>
+                            <td><input type="checkbox" class="form-check-input" id="telegram_notifications" name="telegram_notifications" {% if settings['telegram_notifications'] == '1' %}checked{% endif %}></td>
+                        </tr>
+                        <tr>
+                            <td><label for="telegram_bot_api_key" class="form-label">Telegram Bot API Key</label></td>
+                            <td>
+                                <input type="text" class="form-control" id="telegram_bot_api_key" name="telegram_bot_api_key" 
+                                       value="{{ settings['telegram_bot_api_key'] }}">
+                            </td>
                         </tr>
                 
                         <!-- Security Settings -->

@@ -10,7 +10,7 @@ class Role(db.Model):
     __tablename__ = 'Role'
     id = db.Column('Id', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     role_name = db.Column('RoleName', db.String, nullable=False)
-    
+
     # Relationship
     users = relationship('User', back_populates='role')
 
@@ -24,22 +24,16 @@ class User(UserMixin, db.Model):
     email = db.Column('Email', db.String, nullable=False)
     first_name = db.Column('FirstName', db.String, nullable=False)
     last_name = db.Column('LastName', db.String, nullable=False)
-    date_of_birth = db.Column('DateOfBirth', db.Date, nullable=True)
+    date_of_birth = db.Column('DateOfBirth', db.Date, nullable=False)
+    telegram_id = db.Column('TelegramId', db.String, nullable=True)
 
     # Relationships
     role = relationship('Role', back_populates='users')
-    created_fee_records = db.relationship('FeeRecord', foreign_keys='FeeRecord.created_by', backref='creator')
-    invoices = relationship('Invoice', back_populates='created_by_user')
     parent_students = relationship('ParentStudentRelation', foreign_keys='[ParentStudentRelation.parent_id]', back_populates='parent', cascade="all, delete-orphan")
     student_parents = relationship('ParentStudentRelation', foreign_keys='[ParentStudentRelation.student_id]', back_populates='student', cascade="all, delete-orphan")
-    
-    # Separate relationships for teachers and students in ClassAssignment
-    class_assignments_as_teacher = relationship(
-        'ClassAssignment', foreign_keys='ClassAssignment.teacher_id', back_populates='teacher'
-    )
-    class_assignments_as_student = relationship(
-        'ClassAssignment', foreign_keys='ClassAssignment.student_id', back_populates='student'
-    )
+    class_assignments_as_teacher = relationship('ClassAssignment', foreign_keys='ClassAssignment.teacher_id', back_populates='teacher')
+    class_assignments_as_student = relationship('ClassAssignment', foreign_keys='ClassAssignment.student_id', back_populates='student')
+
 
 # ParentStudentRelation association table
 class ParentStudentRelation(db.Model):
@@ -57,12 +51,12 @@ class FeeStructure(db.Model):
     __tablename__ = 'FeeStructure'
     structure_id = db.Column('StructureId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     description = db.Column('Description', db.String, nullable=False)
-    total_fee = db.Column('TotalFee', db.Numeric, nullable=False)
-    
+    total_fee = db.Column('TotalFee', db.Numeric(10, 2), nullable=False)
+
     # Relationships
-    fee_records = relationship('FeeRecord', back_populates='fee_structure')
     discounts = relationship('Discounts', back_populates='fee_structure')
     late_penalties = relationship('LatePenalties', back_populates='fee_structure')
+    student_fee_assignments = relationship('StudentFeeAssignment', back_populates='fee_structure')
 
 
 # Discounts model
@@ -70,8 +64,8 @@ class Discounts(db.Model):
     __tablename__ = 'Discounts'
     discount_id = db.Column('DiscountId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     structure_id = db.Column('StructureId', db.String, ForeignKey('FeeStructure.StructureId', ondelete='CASCADE'))
-    discount_amount = db.Column('DiscountAmount', db.Numeric, nullable=False)
-    
+    discount_amount = db.Column('DiscountAmount', db.Numeric(10, 2), nullable=False)
+
     # Relationship
     fee_structure = relationship('FeeStructure', back_populates='discounts')
 
@@ -81,8 +75,8 @@ class LatePenalties(db.Model):
     __tablename__ = 'LatePenalties'
     penalty_id = db.Column('PenaltyId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     structure_id = db.Column('StructureId', db.String, ForeignKey('FeeStructure.StructureId', ondelete='CASCADE'))
-    penalty_amount = db.Column('PenaltyAmount', db.Numeric, nullable=False)
-    
+    penalty_amount = db.Column('PenaltyAmount', db.Numeric(10, 2), nullable=False)
+
     # Relationship
     fee_structure = relationship('FeeStructure', back_populates='late_penalties')
 
@@ -93,33 +87,28 @@ class Invoice(db.Model):
     invoice_id = db.Column('InvoiceId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     invoice_date = db.Column('InvoiceDate', db.Date, nullable=False)
     due_date = db.Column('DueDate', db.Date, nullable=False)
-    total_amount = db.Column('TotalAmount', db.Numeric, nullable=False)
+    total_amount = db.Column('TotalAmount', db.Numeric(10, 2), nullable=False)
     status_id = db.Column('StatusId', db.String, ForeignKey('PaymentStatus.StatusId', ondelete='SET NULL'))
-    created_by = db.Column('CreatedBy', db.String, ForeignKey('User.Id', ondelete='SET NULL'))
-    
+
     # Relationships
     fee_records = relationship('FeeRecord', back_populates='invoice')
-    created_by_user = relationship('User', back_populates='invoices')
     receipts = relationship('Receipt', back_populates='invoice')
+    payment_status = relationship('PaymentStatus', back_populates='invoices')
 
 
 # FeeRecord model
 class FeeRecord(db.Model):
     __tablename__ = 'FeeRecord'
     fee_id = db.Column('FeeId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    student_id = db.Column('StudentId', db.String, ForeignKey('User.Id', ondelete='CASCADE'), nullable=False)
-    amount_due = db.Column('AmountDue', db.Numeric, nullable=False)
-    amount_paid = db.Column('AmountPaid', db.Numeric, nullable=False)
+    amount_due = db.Column('AmountDue', db.Numeric(10, 2), nullable=False)
+    amount_paid = db.Column('AmountPaid', db.Numeric(10, 2), nullable=False)
     due_date = db.Column('DueDate', db.Date, nullable=False)
     invoice_id = db.Column('InvoiceId', db.String, ForeignKey('Invoice.InvoiceId', ondelete='SET NULL'))
-    structure_id = db.Column('StructureId', db.String, ForeignKey('FeeStructure.StructureId'))
-    created_by = db.Column('CreatedBy', db.String, ForeignKey('User.Id', ondelete='SET NULL'))
-    
+    fee_assignment_id = db.Column('FeeAssignmentId', db.String, ForeignKey('StudentFeeAssignment.FeeAssignmentId', ondelete='SET NULL'))
+
     # Relationships
     invoice = relationship('Invoice', back_populates='fee_records')
-    fee_structure = relationship('FeeStructure', back_populates='fee_records')
-    student = relationship('User', foreign_keys=[student_id])  
-    created_by_user = relationship('User', back_populates='created_fee_records', foreign_keys=[created_by])
+    student_fee_assignments = relationship('StudentFeeAssignment', back_populates='fee_records')
 
 
 # PaymentStatus model
@@ -127,9 +116,9 @@ class PaymentStatus(db.Model):
     __tablename__ = 'PaymentStatus'
     status_id = db.Column('StatusId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     status_name = db.Column('StatusName', db.String, nullable=False)
-    
+
     # Relationships
-    invoices = relationship('Invoice', backref='payment_status')
+    invoices = relationship('Invoice', back_populates='payment_status')
 
 
 # Class model
@@ -157,12 +146,13 @@ class ClassAssignment(db.Model):
     teacher = relationship('User', foreign_keys=[teacher_id], back_populates='class_assignments_as_teacher')
     student = relationship('User', foreign_keys=[student_id], back_populates='class_assignments_as_student')
 
+
 # Receipt model
 class Receipt(db.Model):
     __tablename__ = 'Receipt'
     receipt_id = db.Column('ReceiptId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     invoice_id = db.Column('InvoiceId', db.String, ForeignKey('Invoice.InvoiceId', ondelete='SET NULL'))
-    amount_paid = db.Column('AmountPaid', db.Numeric, nullable=False)
+    amount_paid = db.Column('AmountPaid', db.Numeric(10, 2), nullable=False)
     payment_date = db.Column('PaymentDate', db.Date, default=db.func.current_date())
     payment_method = db.Column('PaymentMethod', db.String)
 
@@ -186,8 +176,8 @@ class StudentFeeAssignment(db.Model):
     fee_assignment_id = db.Column('FeeAssignmentId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     student_id = db.Column('StudentId', db.String, ForeignKey('User.Id', ondelete='CASCADE'))
     structure_id = db.Column('StructureId', db.String, ForeignKey('FeeStructure.StructureId'))
-    assigned_date = db.Column('AssignedDate', db.Date, nullable=False)
-    
+
     # Relationships
-    student = relationship('User', backref='fee_assignments')
-    fee_structure = relationship('FeeStructure')
+    users = relationship('User')
+    fee_structure = relationship('FeeStructure', back_populates='student_fee_assignments')
+    fee_records = relationship('FeeRecord', back_populates='student_fee_assignments')
