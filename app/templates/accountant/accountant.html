@@ -1,0 +1,79 @@
+{% extends "share/dashboard.html" %} {% block styles %}
+<style>
+	.hover-card {
+		transition: transform 0.2s ease, box-shadow 0.2s ease;
+	}
+	.hover-card:hover {
+		transform: scale(1.05);
+		box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+	}
+</style>
+{% endblock %} {% block title %}Accountant Dashboard{% endblock %} {% block
+card_header %}bg-info{% endblock %} {% block card_title %}Accountant Dashboard{%
+endblock %} {% block card_content %}
+<p>
+	Welcome Accountant! Here you can manage fee records, generate invoices, and
+	track payments.
+</p>
+
+<!-- Display Dashboard Stats with clickable cards and hover effects -->
+<div class="row">
+	<div class="col-md-4">
+		<a
+			href="{{ url_for('accountant.fee_records') }}"
+			class="text-decoration-none"
+		>
+			<div class="card text-white bg-primary mb-3 hover-card">
+				<div class="card-header">Total Fees Collected</div>
+				<div class="card-body">
+					<h5 class="card-title">{{ total_fees }}</h5>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<div class="col-md-4">
+		<a
+			href="{{ url_for('accountant.track_overdue_accounts') }}"
+			class="text-decoration-none"
+		>
+			<div class="card text-white bg-warning mb-3 hover-card">
+				<div class="card-header">Overdue Payments</div>
+				<div class="card-body">
+					<h5 class="card-title">{{ overdue_fees }}</h5>
+				</div>
+			</div>
+		</a>
+	</div>
+
+	<div class="col-md-4">
+		<a
+			href="{{ url_for('accountant.generate_invoices') }}"
+			class="text-decoration-none"
+		>
+			<div class="card text-white bg-success mb-3 hover-card">
+				<div class="card-header">Invoices Generated</div>
+				<div class="card-body">
+					<h5 class="card-title">{{ invoices_generated }}</h5>
+				</div>
+			</div>
+		</a>
+	</div>
+</div>
+
+<!-- Links to Other Sections -->
+<ul class="list-group">
+	<li class="list-group-item">
+		<a href="{{ url_for('accountant.fee_records') }}">Fee Records</a>
+	</li>
+	<li class="list-group-item">
+		<a href="{{ url_for('accountant.generate_invoices') }}">Invoices</a>
+	</li>
+	<li class="list-group-item">
+		<a href="{{ url_for('accountant.track_overdue_accounts') }}"
+			>Overdue Accounts</a
+		>
+	</li>
+</ul>
+
+{% endblock %}

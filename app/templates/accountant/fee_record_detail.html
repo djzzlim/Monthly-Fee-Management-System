@@ -1,0 +1,55 @@
+{% extends "share/dashboard.html" %}
+
+{% block title %}Fee Record Details{% endblock %}
+{% block card_header %}bg-info{% endblock %}
+{% block card_title %}Fee Record Details{% endblock %}
+
+{% block card_content %}
+<p>Details for Fee ID: <strong>{{ fee_record.fee_id }}</strong></p>
+
+<table class="table table-bordered">
+  <tr>
+    <th>Fee ID</th>
+    <td>{{ fee_record.fee_id }}</td>
+  </tr>
+  <tr>
+    <th>Amount Due</th>
+    <td>RM {{ "{:,.2f}".format(fee_record.amount_due) }}</td>
+  </tr>
+  <tr>
+    <th>Amount Paid</th>
+    <td>RM {{ "{:,.2f}".format(fee_record.amount_paid) }}</td>
+  </tr>  
+  <tr>
+    <th>Due Date</th>
+    <td>{{ fee_record.due_date }}</td>
+  </tr>
+  <tr>
+    <th>Status</th>
+    <td>
+      {% if fee_record.amount_paid == 0 %}
+        <span class="text-danger">Not Paid</span>
+      {% elif fee_record.amount_paid < fee_record.amount_due %}
+        <span class="text-warning">Partially Paid</span>
+      {% elif fee_record.amount_paid == fee_record.amount_due %}
+        <span class="text-success">Paid</span>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+
+<div class="d-flex justify-content-between align-items-center mt-4">
+  <a href="{{ url_for('accountant.fee_records') }}" class="btn btn-outline-secondary">Back to Fee Records</a>
+  
+  <div>
+    <a href="#" class="btn btn-primary me-2">Invoice</a>
+    
+    {% if fee_record.amount_paid >= fee_record.amount_due %}
+      <a href="#" class="btn btn-success">Receipt</a>
+    {% else %}
+      <button class="btn btn-secondary" disabled>Receipt</button>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

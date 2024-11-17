@@ -24,7 +24,7 @@ if __name__ == "__main__":
     
     # Start the bot in a separate process
     bot_process = multiprocessing.Process(target=run_bot)
-    bot_process.start()
+    # bot_process.start()
 
     # Run the Flask app
     app.run(debug=True, use_reloader=False)  # use_reloader=False to avoid double execution

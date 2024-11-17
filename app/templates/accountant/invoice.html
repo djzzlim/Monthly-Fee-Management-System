@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .invoice-details {
+            margin-top: 20px;
+        }
+        .invoice-details table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .invoice-details table, .invoice-details th, .invoice-details td {
+            border: 1px solid #ddd;
+        }
+        .invoice-details th, .invoice-details td {
+            padding: 8px;
+            text-align: left;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Invoice for Student Fees</h1>
+
+        <div class="invoice-details">
+            <h2>Invoice Details</h2>
+            <table>
+                <tr>
+                    <th>Invoice ID</th>
+                    <td>{{ invoice_id }}</td>
+                </tr>
+                <tr>
+                    <th>Invoice Date</th>
+                    <td>{{ invoice_date }}</td>
+                </tr>
+                <tr>
+                    <th>Due Date</th>
+                    <td>{{ due_date }}</td>
+                </tr>
+                <tr>
+                    <th>Total Amount</th>
+                    <td>{{ total_amount }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="student-details">
+            <h2>Student Details</h2>
+            <table>
+                <tr>
+                    <th>Student Name</th>
+                    <td>{{ student_name }}</td>
+                </tr>
+                <tr>
+                    <th>Student ID</th>
+                    <td>{{ student_id }}</td>
+                </tr>
+                <tr>
+                    <th>Class</th>
+                    <td>{{ class_name }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="parent-details">
+            <h2>Parent Details</h2>
+            <table>
+                <tr>
+                    <th>Parent Name</th>
+                    <td>{{ parent_name }}</td>
+                </tr>
+                <tr>
+                    <th>Parent ID</th>
+                    <td>{{ parent_id }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="fee-details">
+            <h2>Fee Structure</h2>
+            <table>
+                <tr>
+                    <th>Fee Description</th>
+                    <td>{{ fee_description }}</td>
+                </tr>
+                <tr>
+                    <th>Total Fee</th>
+                    <td>{{ total_fee }}</td>
+                </tr>
+                <tr>
+                    <th>Discount</th>
+                    <td>{{ discount_amount }}</td>
+                </tr>
+                <tr>
+                    <th>Amount Due</th>
+                    <td>{{ amount_due }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="activity-details">
+            <h2>Activities</h2>
+            <p>To be updated later...</p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2024 School Name. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

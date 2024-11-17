@@ -1,154 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Settings</title>
-    <link rel="icon" href="{{ url_for('static', filename='kuman.ico') }}" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .custom-container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        .custom-container1 {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding-bottom: 50px;
-        }
-    </style>
-</head>
-<body>
+{% extends "share/dashboard.html" %} {% block title %}System Settings{% endblock %}
+{% block card_header %}bg-danger{% endblock %} {% block card_title %}System Settings{% endblock %} {% block card_content %}
 
-    <!-- Header (Common to all users) -->
-    <header class="bg-primary text-white p-3">
-        <div class="container">
-            <h1>System Settings</h1>
-            <nav>
-                <ul class="nav">
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{{ url_for('main.dashboard') }}">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{{ url_for('auth.logout') }}">Logout</a>
-                    </li>
-                </ul>
-            </nav>
+<p>Adjust the system configuration settings below:</p>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="alert alert-dismissible fade show mt-3" role="alert">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
         </div>
-    </header>
+    {% endif %}
+{% endwith %}
 
-    <main class="custom-container1 my-5">
-        <div class="card">
-            <div class="card-header bg-danger text-white">
-                <h2>System Settings</h2>
-            </div>
-            <div class="card-body">
-                <p>Adjust the system configuration settings below:</p>
+<!-- General Settings -->
+<h4>General Settings</h4> 
+<form action="{{ url_for('admin.update_settings') }}" method="post">
+    <table class="table">
+        <!-- General Settings -->
+        <tr>
+            <td><label for="school_name" class="form-label">School Name</label></td>
+            <td><input type="text" class="form-control" id="school_name" name="school_name" value="{{ settings['school_name'] }}" required></td>
+        </tr>
+        <tr>
+            <td><label for="contact_email" class="form-label">Contact Email</label></td>
+            <td><input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ settings['contact_email'] }}" required></td>
+        </tr>
 
-                <!-- Flash Messages -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        <div class="alert alert-dismissible fade show mt-3" role="alert">
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }}">{{ message }}</div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                {% endwith %}
+        <!-- SMTP Server Settings -->
+        <tr><th colspan="2"><h4>Email Configuration</h4></th></tr>
+        <tr>
+            <td><label for="smtp_server" class="form-label">SMTP Server</label></td>
+            <td><input type="text" class="form-control" id="smtp_server" name="smtp_server" value="{{ settings['smtp_server'] }}" required></td>
+        </tr>
+        <tr>
+            <td><label for="smtp_port" class="form-label">SMTP Port</label></td>
+            <td><input type="number" class="form-control" id="smtp_port" name="smtp_port" value="{{ settings['smtp_port'] }}" min="1" required></td>
+        </tr>
+        <tr>
+            <td><label for="smtp_email_password" class="form-label">SMTP Email Password</label></td>
+            <td><input type="password" class="form-control" id="smtp_email_password" name="smtp_email_password" value="{{ settings['smtp_email_password'] }}" required></td>
+        </tr>
 
-                <!-- General Settings -->
-                <h4>General Settings</h4> 
-                <form action="{{ url_for('admin.update_settings') }}" method="post">
-                    <table class="table">
-                        <!-- General Settings -->
-                        <tr>
-                            <td><label for="school_name" class="form-label">School Name</label></td>
-                            <td><input type="text" class="form-control" id="school_name" name="school_name" value="{{ settings['school_name'] }}" required></td>
-                        </tr>
-                        <tr>
-                            <td><label for="contact_email" class="form-label">Contact Email</label></td>
-                            <td><input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ settings['contact_email'] }}" required></td>
-                        </tr>
-                
-                        <!-- SMTP Server Settings -->
-                        <tr><th colspan="2"><h4>Email Configuration</h4></th></tr>
-                        <tr>
-                            <td><label for="smtp_server" class="form-label">SMTP Server</label></td>
-                            <td><input type="text" class="form-control" id="smtp_server" name="smtp_server" value="{{ settings['smtp_server'] }}" required></td>
-                        </tr>
-                        <tr>
-                            <td><label for="smtp_port" class="form-label">SMTP Port</label></td>
-                            <td><input type="number" class="form-control" id="smtp_port" name="smtp_port" value="{{ settings['smtp_port'] }}" min="1" required></td>
-                        </tr>
-                        <tr>
-                            <td><label for="smtp_email_password" class="form-label">SMTP Email Password</label></td>
-                            <td><input type="password" class="form-control" id="smtp_email_password" name="smtp_email_password" value="{{ settings['smtp_email_password'] }}" required></td>
-                        </tr>
-                
-                        <!-- Other Settings -->
-                        <tr><th colspan="2"><h4>Fee Settings</h4></th></tr>
-                        <tr>
-                            <td><label for="late_fee_amount" class="form-label">Late Fee Amount</label></td>
-                            <td>
-                                <input type="number" class="form-control" id="late_fee_amount" name="late_fee_amount" 
-                                       value="{{ '%.2f' % (settings['late_fee_amount'] | float) }}" min="0" step="0.01" required>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><label for="due_date_reminder" class="form-label">Due Date Reminder (Days)</label></td>
-                            <td><input type="number" class="form-control" id="due_date_reminder" name="due_date_reminder" value="{{ settings['due_date_reminder'] }}" min="0" required></td>
-                        </tr>
-                
-                        <!-- Notification Settings -->
-                        <tr><th colspan="2"><h4>Notification Settings</h4></th></tr>
-                        <tr>
-                            <td><label for="email_notifications" class="form-check-label">Enable Email Notifications</label></td>
-                            <td><input type="checkbox" class="form-check-input" id="email_notifications" name="email_notifications" {% if settings['email_notifications'] == '1' %}checked{% endif %}></td>
-                        </tr>
-                        <tr>
-                            <td><label for="telegram_notifications" class="form-check-label">Enable Telegram Notifications</label></td>
-                            <td><input type="checkbox" class="form-check-input" id="telegram_notifications" name="telegram_notifications" {% if settings['telegram_notifications'] == '1' %}checked{% endif %}></td>
-                        </tr>
-                        <tr>
-                            <td><label for="telegram_bot_api_key" class="form-label">Telegram Bot API Key</label></td>
-                            <td>
-                                <input type="text" class="form-control" id="telegram_bot_api_key" name="telegram_bot_api_key" 
-                                       value="{{ settings['telegram_bot_api_key'] }}">
-                            </td>
-                        </tr>
-                
-                        <!-- Security Settings -->
-                        <tr><th colspan="2"><h4>Security Settings</h4></th></tr>
-                        <tr>
-                            <td><label for="password_policy" class="form-label">Password Policy</label></td>
-                            <td>
-                                <select class="form-select" id="password_policy" name="password_policy" required>
-                                    <option value="simple" {% if settings['password_policy'] == 'simple' %}selected{% endif %}>Simple (Minimum 6 characters)</option>
-                                    <option value="strong" {% if settings['password_policy'] == 'strong' %}selected{% endif %}>Strong (Minimum 8 characters, includes numbers and symbols)</option>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><label for="two_factor_auth" class="form-check-label">Enable Two-Factor Authentication</label></td>
-                            <td><input type="checkbox" class="form-check-input" id="two_factor_auth" name="two_factor_auth" {% if settings['two_factor_auth'] == '1' %}checked{% endif %}></td>
-                        </tr>
-                    </table>
-                    <button type="submit" class="btn btn-primary mt-3">Save Settings</button>
-                </form>
-                             
-            </div>
-        </div>
-    </main>
+        <!-- Other Settings -->
+        <tr><th colspan="2"><h4>Fee Settings</h4></th></tr>
+        <tr>
+            <td><label for="late_fee_amount" class="form-label">Late Fee Amount</label></td>
+            <td>
+                <input type="number" class="form-control" id="late_fee_amount" name="late_fee_amount" 
+                        value="{{ '%.2f' % (settings['late_fee_amount'] | float) }}" min="0" step="0.01" required>
+            </td>
+        </tr>
+        <tr>
+            <td><label for="due_date_reminder" class="form-label">Due Date Reminder (Days)</label></td>
+            <td><input type="number" class="form-control" id="due_date_reminder" name="due_date_reminder" value="{{ settings['due_date_reminder'] }}" min="0" required></td>
+        </tr>
 
-    <!-- Footer (Common to all users) -->
-    <footer class="bg-dark text-white py-3 fixed-bottom footer">
-        <div class="container text-center">
-            <p>&copy; 2024 School Management System</p>
-        </div>
-    </footer>
+        <!-- Notification Settings -->
+        <tr><th colspan="2"><h4>Notification Settings</h4></th></tr>
+        <tr>
+            <td><label for="email_notifications" class="form-check-label">Enable Email Notifications</label></td>
+            <td><input type="checkbox" class="form-check-input" id="email_notifications" name="email_notifications" {% if settings['email_notifications'] == '1' %}checked{% endif %}></td>
+        </tr>
+        <tr>
+            <td><label for="telegram_notifications" class="form-check-label">Enable Telegram Notifications</label></td>
+            <td><input type="checkbox" class="form-check-input" id="telegram_notifications" name="telegram_notifications" {% if settings['telegram_notifications'] == '1' %}checked{% endif %}></td>
+        </tr>
+        <tr>
+            <td><label for="telegram_bot_api_key" class="form-label">Telegram Bot API Key</label></td>
+            <td>
+                <input type="text" class="form-control" id="telegram_bot_api_key" name="telegram_bot_api_key" 
+                        value="{{ settings['telegram_bot_api_key'] }}">
+            </td>
+        </tr>
 
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-
-</body>
-</html>
+        <!-- Security Settings -->
+        <tr><th colspan="2"><h4>Security Settings</h4></th></tr>
+        <tr>
+            <td><label for="password_policy" class="form-label">Password Policy</label></td>
+            <td>
+                <select class="form-select" id="password_policy" name="password_policy" required>
+                    <option value="simple" {% if settings['password_policy'] == 'simple' %}selected{% endif %}>Simple (Minimum 6 characters)</option>
+                    <option value="strong" {% if settings['password_policy'] == 'strong' %}selected{% endif %}>Strong (Minimum 8 characters, includes numbers and symbols)</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td><label for="two_factor_auth" class="form-check-label">Enable Two-Factor Authentication</label></td>
+            <td><input type="checkbox" class="form-check-input" id="two_factor_auth" name="two_factor_auth" {% if settings['two_factor_auth'] == '1' %}checked{% endif %}></td>
+        </tr>
+    </table>
+    <button type="submit" class="btn btn-primary mt-3">Save Settings</button>
+</form>
+                 
+{% endblock %}

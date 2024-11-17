@@ -1,0 +1,31 @@
+{% extends "share/dashboard.html" %}
+
+{% block content %}
+  {% block title %}
+    Admin Dashboard
+  {% endblock %}
+
+  {% block card_header %}
+    bg-danger
+  {% endblock %}
+
+  {% block card_title %}
+    Admin Dashboard
+  {% endblock %}
+
+  {% block card_content %}
+    <p>Welcome Admin! Here you can manage the entire school system.</p>
+
+    <ul>
+      <li>
+        <a href="{{ url_for('admin.manage_users') }}">Manage User</a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.system_settings') }}">System Settings</a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.reports') }}">Generate Reports</a>
+      </li>
+    </ul>
+  {% endblock %}
+{% endblock %}

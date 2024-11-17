@@ -1,0 +1,47 @@
+{% extends "share/dashboard.html" %}
+
+{% block title %}Fee Records{% endblock %}
+{% block card_header %}bg-info{% endblock %}
+{% block card_title %}Fee Records{% endblock %}
+
+{% block card_content %}
+<p>
+  Here are the fee records. Payment status is shown based on the amount paid.
+</p>
+
+<!-- Display Fee Records -->
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Fee ID</th>
+      <th>Amount Due</th>
+      <th>Amount Paid</th>
+      <th>Due Date</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for record in fee_records %}
+    <tr>
+      <td>
+        <a href="{{ url_for('accountant.fee_record_detail', fee_id=record.fee_id) }}">{{ record.fee_id }}</a>
+      </td>      
+      <td>RM {{ "{:,.2f}".format(record.amount_due) }}</td>
+      <td>RM {{ "{:,.2f}".format(record.amount_paid) }}</td>
+      <td>{{ record.due_date }}</td>
+      <td>
+        {% if record.amount_paid == 0 %}
+          <span class="text-danger">Not Paid</span>
+        {% elif record.amount_paid < record.amount_due %}
+          <span class="text-warning">Partially Paid</span>
+        {% elif record.amount_paid == record.amount_due %}
+          <span class="text-success">Paid</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
+
