@@ -2,7 +2,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, ContextTypes, filters
 from app.models.models import Settings, User
 from app import create_app, db
-from flask import current_app
 
 flask_app = create_app()
 flask_app.app_context().push()

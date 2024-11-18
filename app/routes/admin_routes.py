@@ -6,6 +6,8 @@ from app.models.models import User, Role, Settings
 from .routes import role_required, app_name
 from sqlalchemy import func
 from datetime import datetime
+from app.utilities.utils import allowed_file, compress_image, convert_to_favicon
+import os
 import uuid
 
 # Create the admin blueprint
@@ -42,7 +44,44 @@ def system_settings():
     # Pass settings to the template
     return render_template('admin/system_settings.html', settings=settings, app_name=app_name())
 
-# Route to manage system settings (empty for now)
+# Route to update the logo
+@admin.route('/admin/update_logo', methods=['GET', 'POST'])
+@login_required
+@role_required('1')
+def update_logo():
+    print("Received request to update logo.")  # Debugging line
+
+    if 'app_logo' not in request.files:
+        flash('No file part', 'danger')
+        return redirect(url_for('system_settings'))
+
+    file = request.files['app_logo']
+    if file.filename == '':
+        flash('No selected file', 'danger')
+        return redirect(url_for('system_settings'))
+
+    if file and allowed_file(file.filename):
+        filename = 'logo.png'
+        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+
+        try:
+            print(f"Saving file to {filepath}")  # Debugging line
+            file.save(filepath)
+
+            # Compress the image after saving
+            compress_image(filepath)
+
+            # Optionally, create a favicon from the logo
+            convert_to_favicon(filepath)
+
+            flash('Logo updated successfully!', 'success')
+        except Exception as e:
+            print(f"Error saving file: {str(e)}")  # Debugging line
+            flash(f'Error saving file: {str(e)}', 'danger')
+    else:
+        flash('Invalid file type or size!', 'danger')
+
+    return redirect(url_for('admin.system_settings'))
 
 
 @admin.route('/update_settings', methods=['GET', 'POST'])

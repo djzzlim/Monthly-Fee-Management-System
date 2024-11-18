@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort, current_app
+from flask import Blueprint, render_template, abort, current_app, redirect, url_for
 from flask_login import login_required, current_user
 from app.models.models import Settings
 from functools import wraps
@@ -28,16 +28,16 @@ routes = Blueprint('routes', __name__)
 
 @routes.route('/', methods=['GET', 'POST'])
 def home():
-    return render_template("home.html")
+    return render_template("home.html", app_name=app_name())
 
 
 @routes.route('/dashboard')
 @login_required  # Ensure the user is logged in
 def dashboard():
-    app_name = "School Management System"
-    with current_app.app_context():
-        setting = Settings.query.filter_by(setting_key='school_name').first()
-        if setting and setting.setting_value:
-            app_name = setting.setting_value
-    return render_template('dashboard.html', app_name=app_name)
+    if current_user.role_id == '1':  # Admin
+        return redirect(url_for('admin.dashboard'))
+    elif current_user.role_id == '4':  # Accountant
+        return redirect(url_for('accountant.dashboard'))
+    else:
+        return redirect(url_for('routes.home'))
 

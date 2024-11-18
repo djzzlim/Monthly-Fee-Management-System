@@ -1,8 +1,9 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from os import path, urandom
+from os import path
 from config import Config
 from flask_login import LoginManager
+import os
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -12,6 +13,10 @@ DB_NAME = "db.sqlite3"
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    app.config['UPLOAD_FOLDER'] = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'static')
+
+
     db.init_app(app)
 
     from .routes.routes import routes
@@ -28,20 +33,13 @@ def create_app():
     # app.register_blueprint(education, url_prefix='/education')
     # app.register_blueprint(parent, url_prefix='/parent')
 
-    create_database(app)
+    with app.app_context():
+        db.create_all()
 
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
 
     return app
-
-
-def create_database(app):
-    if not path.exists('website/' + DB_NAME):
-        with app.app_context():
-            db.create_all()
-            print('Create Database!')
-
 
 @login_manager.user_loader
 def load_user(user_id):
