@@ -40,10 +40,3 @@ def send_email(subject: str, body: str, receiver_email: str):
     except Exception as e:
         print(f"Failed to send email: {e}")
 
-if __name__ == "__main__":
-    # Example usage
-    test_subject = "Test Email"
-    test_body = "This is a test email sent using Flask and SQLAlchemy."
-    test_receiver = "receiver_email@example.com"
-
-    send_email(test_subject, test_body, test_receiver)
