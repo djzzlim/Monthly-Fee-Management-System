@@ -23,16 +23,6 @@ if __name__ == "__main__":
     bot_process = multiprocessing.Process(target=run_bot)
     bot_process.start()
 
-    # Create the Flask app context
-    with app.app_context():
-        db.create_all()  # Create tables in the database
-        
-        # Now call send_email within the app context
-        test_subject = "Test Email from Main"
-        test_body = "This email is sent from the main application."
-        test_receiver = "djzzlim@gmail.com"
-        
-        send_email(test_subject, test_body, test_receiver)
 
     # Run the Flask app
     app.run(debug=True, use_reloader=False)  # use_reloader=False to avoid double execution

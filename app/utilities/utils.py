@@ -42,3 +42,5 @@ def convert_to_favicon(file_path):
         img.save(favicon_path, format='ICO')
     except Exception as e:
         raise Exception(f"Error converting to favicon: {str(e)}")
+    
+    
