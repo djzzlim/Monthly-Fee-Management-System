@@ -47,7 +47,21 @@
             <td><label for="contact_email" class="form-label">Contact Email</label></td>
             <td><input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ settings['contact_email'] }}" required></td>
         </tr>
-
+        <!-- Address Section -->
+        <tr>
+            <td><label for="address" class="form-label">School Address</label></td>
+            <td><textarea class="form-control" id="address" name="address" rows="3" required>{{ settings['address'] }}</textarea></td>
+        </tr>
+        <!-- Phone Number Section -->
+        <tr>
+            <td><label for="contact_number" class="form-label">Phone Number</label></td>
+            <td>
+                <input type="tel" class="form-control" id="contact_number" name="contact_number" 
+                       value="{{ settings['contact_number'] }}" pattern="^\+?[0-9]{1,15}$" 
+                       placeholder="e.g., +1234567890" required>
+            </td>
+        </tr>
+        
         <!-- SMTP Server Settings -->
         <tr><th colspan="2"><h4>Email Configuration</h4></th></tr>
         <tr>
@@ -113,6 +127,5 @@
     </table>
     <button type="submit" class="btn btn-primary mt-3">Save Settings</button>
 </form>
-
 
 {% endblock %}
