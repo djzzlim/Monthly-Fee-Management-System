@@ -59,17 +59,6 @@ class FeeStructure(db.Model):
     student_fee_assignments = relationship('StudentFeeAssignment', back_populates='fee_structure')
 
 
-# Discounts model
-class Discounts(db.Model):
-    __tablename__ = 'Discounts'
-    discount_id = db.Column('DiscountId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    structure_id = db.Column('StructureId', db.String, ForeignKey('FeeStructure.StructureId', ondelete='CASCADE'))
-    discount_amount = db.Column('DiscountAmount', db.Numeric(10, 2), nullable=False)
-
-    # Relationship
-    fee_structure = relationship('FeeStructure', back_populates='discounts')
-
-
 # LatePenalties model
 class LatePenalties(db.Model):
     __tablename__ = 'LatePenalties'
