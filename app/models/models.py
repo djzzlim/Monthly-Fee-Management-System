@@ -54,7 +54,6 @@ class FeeStructure(db.Model):
     total_fee = db.Column('TotalFee', db.Numeric(10, 2), nullable=False)
 
     # Relationships
-    discounts = relationship('Discounts', back_populates='fee_structure')
     late_penalties = relationship('LatePenalties', back_populates='fee_structure')
     student_fee_assignments = relationship('StudentFeeAssignment', back_populates='fee_structure')
 
