@@ -18,14 +18,21 @@
 
     <ul>
       <li>
-        <a href="{{ url_for('admin.manage_users') }}">Manage User</a>
+        <a href="{{ url_for('admin.manage_users') }}">User Management</a>
       </li>
       <li>
-        <a href="{{ url_for('admin.system_settings') }}">System Settings</a>
+        <a href="{{ url_for('admin.fee_management') }}">Fee Management</a>
       </li>
       <li>
-        <a href="{{ url_for('admin.reports') }}">Generate Reports</a>
+        <a href="{{ url_for('admin.class_assignment') }}">Class Assignments</a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.parent_student') }}">Parent-Student Data</a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.system_settings') }}">System Configuration</a>
       </li>
     </ul>
+    
   {% endblock %}
 {% endblock %}

@@ -114,7 +114,7 @@ def update_settings():
                             setting.setting_value = form_value
                 else:
                     # If form_value is None, this means the checkbox is unchecked, set it to '0' (or default value)
-                    if setting.setting_key in ['email_notifications', 'sms_notifications', 'two_factor_auth']:
+                    if setting.setting_key in ['email_notifications', 'sms_notifications']:
                         setting.setting_value = '0'  # Unchecked checkboxes default to '0'
 
             # Commit the changes to the database
@@ -132,16 +132,28 @@ def update_settings():
     return render_template('admin/system_settings.html', settings=Settings.query.all(), app_name=app_name())
 
 
-# Route to view reports (empty for now)
-@admin.route('/reports')
+# Route to view class assignment (empty for now)
+@admin.route('/class_assignment')
 @role_required('1')
 @login_required
-def reports():
-    return render_template('admin/reports.html', app_name=app_name())
+def class_assignment():
+    return render_template('admin/class_assignment.html', app_name=app_name())
+
+# Route to view parent student (empty for now)
+@admin.route('/parent_student')
+@role_required('1')
+@login_required
+def parent_student():
+    return render_template('admin/parent_student.html', app_name=app_name())
+
+# Route to view fee management (empty for now)
+@admin.route('/fee_management')
+@role_required('1')
+@login_required
+def fee_management():
+    return render_template('admin/fee_management.html', app_name=app_name())
 
 # Route to add a new user
-
-
 @admin.route('/add_user', methods=['GET', 'POST'])
 @login_required
 @role_required('1')
