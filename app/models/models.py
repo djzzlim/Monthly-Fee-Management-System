@@ -79,17 +79,12 @@ class Invoice(db.Model):
     total_amount = db.Column('TotalAmount', db.Numeric(10, 2), nullable=False)
     late_fee_amount = db.Column('LateFeeAmount', db.Numeric(10, 2))
     discount_amount = db.Column('DiscountAmount', db.Numeric(10, 2))
-    status_id = db.Column('StatusId', db.String, ForeignKey('PaymentStatus.StatusId', ondelete='SET NULL'))
-    fee_assignment_id = db.Column('FeeAssignmentId', db.String, ForeignKey('StudentFeeAssignment.FeeAssignmentId', ondelete='CASCADE'))
 
     # Relationships
-    payment_status = relationship('PaymentStatus', back_populates='invoices')
+    fee_record_id = db.Column('FeeRecordId', db.String, db.ForeignKey('FeeRecord.FeeRecordId', ondelete='CASCADE'), nullable=False)
     receipts = relationship('Receipt', back_populates='invoice')
-    fee_assignment = relationship('StudentFeeAssignment', back_populates='invoices', uselist=False)
 
 # PaymentStatus model
-
-
 class PaymentStatus(db.Model):
     __tablename__ = 'PaymentStatus'
     status_id = db.Column('StatusId', db.String,
@@ -97,7 +92,7 @@ class PaymentStatus(db.Model):
     status_name = db.Column('StatusName', db.String, nullable=False)
 
     # Relationships
-    invoices = relationship('Invoice', back_populates='payment_status')
+    fee_record = relationship('FeeRecord', back_populates='payment_status')
 
 
 # Class model
@@ -123,8 +118,6 @@ class ClassAssignment(db.Model):
                            ForeignKey('User.Id', ondelete='SET NULL'))
     student_id = db.Column('StudentId', db.String,
                            ForeignKey('User.Id', ondelete='SET NULL'))
-    assignment_date = db.Column(
-        'AssignmentDate', db.Date, default=db.func.current_date())
 
     # Relationships
     class_ = relationship('Class', back_populates='assignments')
@@ -166,8 +159,7 @@ class StudentFeeAssignment(db.Model):
     __tablename__ = 'StudentFeeAssignment'
     fee_assignment_id = db.Column(
         'FeeAssignmentId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    student_id = db.Column('StudentId', db.String,
-                           ForeignKey('User.Id', ondelete='CASCADE'))
+    student_id = db.Column('StudentId', db.String, ForeignKey('User.Id', ondelete='CASCADE'))
     fee_structure_id = db.Column('StructureId', db.String, ForeignKey(
         'FeeStructure.StructureId', ondelete='CASCADE'))
     activity_id = db.Column('ActivityId', db.String, ForeignKey(
@@ -179,7 +171,7 @@ class StudentFeeAssignment(db.Model):
     activity = relationship(
         'Activity', back_populates='student_fee_assignments')
     student = relationship('User', back_populates='student_fee_assignments')
-    invoices = relationship('Invoice', back_populates='fee_assignment')
+    fee_record = relationship('FeeRecord', back_populates='fee_assignment')
 
 
 # Activity model
@@ -194,3 +186,19 @@ class Activity(db.Model):
     # Relationship
     student_fee_assignments = relationship(
         'StudentFeeAssignment', back_populates='activity')
+
+
+# Fee record model
+class FeeRecord(db.Model):
+    __tablename__ = 'FeeRecord'
+    fee_record_id = db.Column('FeeRecordId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    fee_assignment_id = db.Column('FeeAssignmentId', db.String, db.ForeignKey('StudentFeeAssignment.FeeAssignmentId', ondelete='CASCADE'), nullable=False)
+    status_id = db.Column('StatusId', db.String, db.ForeignKey('PaymentStatus.StatusId', ondelete='SET NULL'), nullable=False)
+    amount_due = db.Column('AmountDue', db.Numeric(10, 2), nullable=False)
+    paid_amount = db.Column('PaidAmount', db.Numeric(10, 2), default=0.00)
+    due_date = db.Column('DueDate', db.Date, nullable=False)
+    invoice_id = db.Column('InvoiceId', db.String, nullable=True)
+
+    # Relationships
+    payment_status = relationship('PaymentStatus', back_populates='fee_record')
+    fee_assignment = relationship('StudentFeeAssignment', back_populates='fee_record', uselist=False)

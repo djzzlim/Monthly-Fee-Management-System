@@ -1,0 +1,247 @@
+{% extends "share/dashboard.html" %}
+
+{% block title %}
+Class Assignments
+{% endblock %}
+
+{% block card_header %}
+bg-danger
+{% endblock %}
+
+{% block card_title %}
+Class Assignments
+{% endblock %}
+
+{% block card_content %}
+<style>
+    .scrollable-container {
+        max-height: 200px;
+        /* Set the max height for the scrollable area */
+        overflow-y: auto;
+        /* Enable vertical scrolling */
+        border: 1px solid #ddd;
+        /* Optional: add border to make it more visible */
+        padding: 15px;
+        /* Increase padding inside the scrollable container */
+        border-radius: 8px;
+        /* Rounded corners for a more modern look */
+    }
+
+    .student-item {
+        padding-left: 15px;
+        /* Adds padding to the left of the checkbox and label */
+        margin-bottom: 15px;
+        /* Increase space between each student item */
+        display: flex;
+        align-items: center;
+        /* Align checkbox and label vertically */
+    }
+
+    .form-check-label {
+        margin-left: 10px;
+        /* Adds more space between the checkbox and label */
+    }
+
+    .form-check-input {
+        transform: scale(1.3);
+        /* Slightly larger checkbox */
+        margin-right: 10px;
+        /* Space between checkbox and label */
+    }
+
+    .form-check {
+        display: block;
+        /* Ensure the checkboxes are block-level */
+    }
+
+    /* Styling for search box */
+    #search-student,
+    #search-assignment {
+        margin-bottom: 15px;
+        padding: 8px;
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    /* Style for the assignments table scrollbar */
+    .scrollable-assignments {
+        max-height: 300px;
+        /* Set a fixed height for the assignments section */
+        overflow-y: auto;
+        /* Enable vertical scrolling */
+        border: 1px solid #ddd;
+        /* Optional: add border for better visibility */
+        border-radius: 8px;
+        /* Rounded corners */
+        padding-right: 10px;
+        /* Optional: add some padding */
+    }
+</style>
+
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- Form Section -->
+    <div class="card-body">
+        <form method="POST" id="assign-form">
+            <!-- Class Selection -->
+            <div class="form-group mb-3">
+                <label for="class">Select Class</label>
+                <select class="form-control" id="class" name="class_id" required>
+                    {% for class in classes %}
+                    <option value="{{ class.class_id }}">{{ class.class_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Teacher Selection -->
+            <div class="form-group mb-3">
+                <label for="teacher">Select Teacher</label>
+                <select class="form-control" id="teacher" name="teacher_id" required>
+                    {% if teachers %}
+                    {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}">{{ teacher.first_name }} {{ teacher.last_name }}</option>
+                    {% endfor %}
+                    {% else %}
+                    <option disabled>No teachers available</option>
+                    {% endif %}
+                </select>
+            </div>
+
+            <!-- Student Selection -->
+            <div class="form-group mb-3">
+                <label for="students">Select Students</label>
+                <input type="text" id="search-student" class="form-control" placeholder="Search students..."
+                    onkeyup="searchByStudent()">
+                <div class="scrollable-container" id="student-list">
+                    <div class="form-check">
+                        {% for student in students %}
+                        <div class="student-item" data-name="{{ student.first_name }} {{ student.last_name }}">
+                            <input class="form-check-input" type="checkbox" id="student_{{ student.id }}"
+                                name="student_id" value="{{ student.id }}">
+                            <label class="form-check-label" for="student_{{ student.id }}">
+                                {{ student.first_name }} {{ student.last_name }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <small class="form-text text-muted">Check the boxes to select students.</small>
+            </div>
+
+            <!-- Assign Button -->
+            <button type="submit" class="btn btn-primary" name="assign_students">Assign Students</button>
+
+        </form>
+
+        <!-- Table Section for Existing Assignments -->
+        <div class="card mt-4">
+            <div class="card-header bg-secondary text-white">
+                <h5>Existing Assignments</h5>
+            </div>
+            <div class="card-body">
+                <!-- Search Filters for Assignments -->
+                <div class="mb-3">
+                    <label for="search-class">Search by Class</label>
+                    <select id="search-class" class="form-control" onchange="searchByClass()">
+                        <option value="">Select a Class</option>
+                        {% for class in classes %}
+                        <option value="{{ class.class_id }}">{{ class.class_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="scrollable-assignments">
+                    <form method="POST" id="delete-form">
+                        <table class="table table-striped table-bordered">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" id="select_all" onclick="toggleSelectAll()">
+                                    </th>
+                                    <th>Class</th>
+                                    <th>Teacher</th>
+                                    <th>Student</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assignment-list">
+                                {% for assignment in assignments %}
+                                <tr class="assignment-item" data-class-id="{{ assignment.class_.class_id }}"
+                                    data-class="{{ assignment.class_.class_name }}"
+                                    data-teacher="{{ assignment.teacher.first_name }} {{ assignment.teacher.last_name }}"
+                                    data-student="{{ assignment.student.first_name }} {{ assignment.student.last_name }}">
+                                    <td>
+                                        <input type="checkbox" class="assignment_checkbox" name="assignment_ids"
+                                            value="{{ assignment.assignment_id }}">
+                                    </td>
+                                    <td>{{ assignment.class_.class_name }}</td>
+                                    <td>{{ assignment.teacher.first_name }} {{ assignment.teacher.last_name }}</td>
+                                    <td>{{ assignment.student.first_name }} {{ assignment.student.last_name }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+
+                <!-- Move the delete button outside the scrollable container -->
+                <button type="submit" class="btn btn-danger mt-3" form="delete-form" name="delete_selected">Delete
+                    Selected</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to toggle all checkboxes for assignments
+    function toggleSelectAll() {
+        var selectAllCheckbox = document.getElementById('select_all');
+        var checkboxes = document.querySelectorAll('.assignment_checkbox');
+        checkboxes.forEach(function (checkbox) {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+    }
+
+    // Function to filter assignments based on class
+    function searchByClass() {
+        var classFilter = document.getElementById('search-class').value;
+        var assignments = document.querySelectorAll('.assignment-item');
+
+        assignments.forEach(function (assignment) {
+            var classId = assignment.getAttribute('data-class-id'); // Ensure each assignment row has the class ID as a data attribute
+            if (classId === classFilter || classFilter === "") {
+                assignment.style.display = ''; // Show the assignment
+            } else {
+                assignment.style.display = 'none'; // Hide the assignment
+            }
+        });
+    }
+
+    // Function to filter students based on the search input
+    function searchByStudent() {
+        var studentFilter = document.getElementById('search-student').value.toLowerCase();
+        var students = document.querySelectorAll('.student-item');
+
+        students.forEach(function (student) {
+            var studentName = student.getAttribute('data-name').toLowerCase(); // Access the full name stored in data-name
+            if (studentName.indexOf(studentFilter) > -1) {
+                student.style.display = ''; // Show the student item
+            } else {
+                student.style.display = 'none'; // Hide the student item
+            }
+        });
+    }
+
+
+</script>
+
+{% endblock %}
