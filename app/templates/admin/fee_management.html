@@ -1,4 +1,86 @@
-{% extends "share/dashboard.html" %} {% block title %}Fee Management{% endblock %}
-{% block card_header %}bg-danger{% endblock %} {% block card_title %}Fee Management{% endblock %} {% block card_content %}
+{% extends "share/dashboard.html" %}
+{% block title %}Fee Management{% endblock %}
+{% block card_header %}bg-danger{% endblock %}
+{% block card_title %}Fee Management{% endblock %}
+{% block card_content %}
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="alert alert-info">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="container mt-4">
+
+    <h4>Fee Structures</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Description</th>
+                <th>Total Fee</th>
+                <th class="actions-column">Actions</th> <!-- Apply same class for styling -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for fee in fee_structures %}
+            <tr>
+                <td>{{ fee.structure_id }}</td>
+                <td>{{ fee.description }}</td>
+                <td>{{ fee.total_fee }}</td>
+                <td class="actions-column">
+                    <a href="{{ url_for('admin.edit_fee_structure', id=fee.structure_id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{{ url_for('admin.delete_fee_structure', id=fee.structure_id) }}" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('admin.add_fee_structure') }}" class="btn btn-primary">Add New Fee Structure</a>
+
+    <h4 class="mt-5">Activities</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Fee Amount</th>
+                <th class="actions-column">Actions</th> <!-- Apply the same class for styling -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for activity in activities %}
+            <tr>
+                <td>{{ activity.activity_id }}</td>
+                <td>{{ activity.name }}</td>
+                <td>{{ activity.description }}</td>
+                <td>{{ activity.fee_amount }}</td>
+                <td class="actions-column">
+                    <a href="{{ url_for('admin.edit_activity', id=activity.activity_id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{{ url_for('admin.delete_activity', id=activity.activity_id) }}" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('admin.add_activity') }}" class="btn btn-primary">Add New Activity</a>
+
+</div>
+
+{% block custom_styles %}
+<style>
+    .actions-column {
+        width: 150px; /* Set the same fixed width for both columns */
+        text-align: center; /* Align the buttons to the center */
+    }
+</style>
+{% endblock %}
 
 {% endblock %}

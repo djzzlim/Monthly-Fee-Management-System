@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required
 from app import db  # Importing db from the app package
 # Import User and Role models from the models module
-from app.models.models import User, Role, Settings, Class, ClassAssignment, ParentStudentRelation
+from app.models.models import User, Role, Settings, Class, ClassAssignment, ParentStudentRelation, FeeStructure, Activity
 from .routes import role_required, app_name
 from sqlalchemy import func
 from datetime import datetime
@@ -162,22 +162,15 @@ def class_assignments():
             return redirect(url_for('admin.class_assignments'))
 
         # Track duplicates
-        duplicates = []
-
-        # Check if a teacher is already assigned to this class
-        existing_teacher_assignment = ClassAssignment.query.filter_by(class_id=class_id).first()
-        if existing_teacher_assignment:
-            # If there is an existing assignment for this class, prevent assigning another teacher
-            flash(f"A teacher is already assigned to class {class_id}.", "warning")
-            return redirect(url_for('admin.class_assignments'))
+        skipped_students = []
 
         # Create ClassAssignment records for each student, checking for duplicates
         for student_id in student_ids:
             # Check if the student is already assigned to any class
             existing_student_assignment = ClassAssignment.query.filter_by(student_id=student_id).first()
             if existing_student_assignment:
-                # If student already assigned to another class, add to duplicates list
-                duplicates.append(f"Student {student_id} is already assigned to a class.")
+                # If student already assigned to a class, add to skipped list
+                skipped_students.append(f"Student {student_id} is already assigned to a class.")
             else:
                 # If no duplicate, create new assignment
                 new_assignment = ClassAssignment(
@@ -190,8 +183,8 @@ def class_assignments():
         # Commit the new assignments to the database
         db.session.commit()
 
-        if duplicates:
-            flash(f"Some assignments were skipped due to existing assignments: {', '.join(duplicates)}", "warning")
+        if skipped_students:
+            flash(f"Some assignments were skipped due to existing assignments: {', '.join(skipped_students)}", "warning")
         else:
             flash("Class Assignment(s) successfully created!", "success")
         
@@ -205,6 +198,7 @@ def class_assignments():
         assignments=assignments,
         app_name=app_name()
     )
+
 
 
 # Route to view parent student (empty for now)
@@ -253,10 +247,132 @@ def parent_student():
 
 # Route to view fee management (empty for now)
 @admin.route('/fee_management')
-@role_required('1')
 @login_required
+@role_required('1')
 def fee_management():
-    return render_template('admin/fee_management.html', app_name=app_name())
+    # Fetch all fee structures and activities
+    fee_structures = FeeStructure.query.all()
+    activities = Activity.query.all()
+    return render_template('admin/fee_management.html', fee_structures=fee_structures, activities=activities, app_name=app_name())
+
+@admin.route('/add_fee_structure', methods=['GET', 'POST'])
+@login_required
+@role_required('1')
+def add_fee_structure():
+    if request.method == 'POST':
+        # Handle form submission (creating a new fee structure)
+        description = request.form['description']
+        total_fee = request.form['total_fee']
+        new_fee_structure = FeeStructure(description=description, total_fee=total_fee)
+        db.session.add(new_fee_structure)
+        db.session.commit()
+        flash('Fee Structure Added Successfully!', 'success')
+        return redirect(url_for('admin.fee_management'))
+    return render_template('admin/add_fee_structure.html', app_name=app_name())
+
+@admin.route('/edit_fee_structure/<id>', methods=['GET', 'POST'])
+@login_required
+@role_required('1')
+def edit_fee_structure(id):
+    fee_structure = FeeStructure.query.get(id)
+    
+    if not fee_structure:
+        flash('Fee Structure not found!', 'danger')
+        return redirect(url_for('admin.fee_management'))
+    
+    # Handle the form submission
+    if request.method == 'POST':
+        fee_structure.description = request.form['description']
+        fee_structure.total_fee = request.form['total_fee']
+        fee_structure.other_field = request.form.get('other_field', '')  # Optional field, handle with .get()
+
+        db.session.commit()
+        flash('Fee Structure updated successfully!', 'success')
+        return redirect(url_for('admin.fee_management'))
+
+    return render_template('admin/edit_fee_structure.html', fee_structure=fee_structure, app_name=app_name())
+
+@admin.route('/update_fee_structure/<id>', methods=['POST'])
+@login_required
+@role_required('1')
+def update_fee_structure(id):
+    # Retrieve the FeeStructure object from the database
+    fee_structure = FeeStructure.query.get(id)
+
+    if fee_structure:
+        # Update the fields with the new values from the form
+        fee_structure.description = request.form['description']
+        fee_structure.total_fee = request.form['total_fee']
+
+        # Commit the changes to the database
+        db.session.commit()
+
+        # Flash a success message
+        flash('Fee Structure Updated Successfully!', 'success')
+    else:
+        flash('Fee Structure not found.', 'danger')
+
+    # Redirect to the fee management page after updating
+    return redirect(url_for('admin.fee_management'))
+
+# Fee Structure: Delete
+@admin.route('/delete_fee_structure/<id>')
+@login_required
+@role_required('1')
+def delete_fee_structure(id):
+    fee_structure = FeeStructure.query.get(id)
+    db.session.delete(fee_structure)
+    db.session.commit()
+    flash('Fee Structure Deleted Successfully!', 'success')
+    return redirect(url_for('admin.fee_management'))
+
+# Activity: Add
+@admin.route('/add_activity', methods=['GET', 'POST'])
+@login_required
+@role_required('1')
+def add_activity():
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        fee_amount = request.form['fee_amount']
+
+        new_activity = Activity(
+            activity_id=str(uuid.uuid4()),
+            name=name,
+            description=description,
+            fee_amount=fee_amount
+        )
+        db.session.add(new_activity)
+        db.session.commit()
+        flash('Activity Added Successfully!', 'success')
+        return redirect(url_for('admin.fee_management'))
+    return render_template('admin/add_activity.html', app_name=app_name())
+
+# Activity: Edit
+@admin.route('/edit_activity/<id>', methods=['GET', 'POST'])
+@login_required
+@role_required('1')
+def edit_activity(id):
+    activity = Activity.query.get(id)
+    if request.method == 'POST':
+        activity.name = request.form['activity_name']
+        activity.description = request.form['description']
+        activity.fee_amount = request.form['fee_amount']
+        db.session.commit()
+        flash('Activity Updated Successfully!', 'success')
+        return redirect(url_for('admin.fee_management'))
+    return render_template('admin/edit_activity.html', activity=activity, app_name=app_name())
+
+# Activity: Delete
+@admin.route('/delete_activity/<id>')
+@login_required
+@role_required('1')
+def delete_activity(id):
+    activity = Activity.query.get(id)
+    db.session.delete(activity)
+    db.session.commit()
+    flash('Activity Deleted Successfully!', 'success')
+    return redirect(url_for('admin.fee_management'))
 
 # Route to add a new user
 @admin.route('/add_user', methods=['GET', 'POST'])
