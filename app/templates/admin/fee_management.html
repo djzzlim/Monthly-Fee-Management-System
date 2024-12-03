@@ -43,34 +43,6 @@
 
     <a href="{{ url_for('admin.add_fee_structure') }}" class="btn btn-primary">Add New Fee Structure</a>
 
-    <h4 class="mt-5">Activities</h4>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Fee Amount</th>
-                <th class="actions-column">Actions</th> <!-- Apply the same class for styling -->
-            </tr>
-        </thead>
-        <tbody>
-            {% for activity in activities %}
-            <tr>
-                <td>{{ activity.activity_id }}</td>
-                <td>{{ activity.name }}</td>
-                <td>{{ activity.description }}</td>
-                <td>{{ activity.fee_amount }}</td>
-                <td class="actions-column">
-                    <a href="{{ url_for('admin.edit_activity', id=activity.activity_id) }}" class="btn btn-sm btn-warning">Edit</a>
-                    <a href="{{ url_for('admin.delete_activity', id=activity.activity_id) }}" class="btn btn-sm btn-danger">Delete</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <a href="{{ url_for('admin.add_activity') }}" class="btn btn-primary">Add New Activity</a>
 
 </div>
 

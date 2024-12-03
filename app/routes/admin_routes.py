@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required
 from app import db  # Importing db from the app package
 # Import User and Role models from the models module
-from app.models.models import User, Role, Settings, Class, ClassAssignment, ParentStudentRelation, FeeStructure, Activity
+from app.models.models import User, Role, Settings, Class, ClassAssignment, ParentStudentRelation, FeeStructure
 from .routes import role_required, app_name
 from sqlalchemy import func
 from datetime import datetime
@@ -252,8 +252,7 @@ def parent_student():
 def fee_management():
     # Fetch all fee structures and activities
     fee_structures = FeeStructure.query.all()
-    activities = Activity.query.all()
-    return render_template('admin/fee_management.html', fee_structures=fee_structures, activities=activities, app_name=app_name())
+    return render_template('admin/fee_management.html', fee_structures=fee_structures, app_name=app_name())
 
 @admin.route('/add_fee_structure', methods=['GET', 'POST'])
 @login_required
@@ -324,54 +323,6 @@ def delete_fee_structure(id):
     db.session.delete(fee_structure)
     db.session.commit()
     flash('Fee Structure Deleted Successfully!', 'success')
-    return redirect(url_for('admin.fee_management'))
-
-# Activity: Add
-@admin.route('/add_activity', methods=['GET', 'POST'])
-@login_required
-@role_required('1')
-def add_activity():
-    if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        fee_amount = request.form['fee_amount']
-
-        new_activity = Activity(
-            activity_id=str(uuid.uuid4()),
-            name=name,
-            description=description,
-            fee_amount=fee_amount
-        )
-        db.session.add(new_activity)
-        db.session.commit()
-        flash('Activity Added Successfully!', 'success')
-        return redirect(url_for('admin.fee_management'))
-    return render_template('admin/add_activity.html', app_name=app_name())
-
-# Activity: Edit
-@admin.route('/edit_activity/<id>', methods=['GET', 'POST'])
-@login_required
-@role_required('1')
-def edit_activity(id):
-    activity = Activity.query.get(id)
-    if request.method == 'POST':
-        activity.name = request.form['activity_name']
-        activity.description = request.form['description']
-        activity.fee_amount = request.form['fee_amount']
-        db.session.commit()
-        flash('Activity Updated Successfully!', 'success')
-        return redirect(url_for('admin.fee_management'))
-    return render_template('admin/edit_activity.html', activity=activity, app_name=app_name())
-
-# Activity: Delete
-@admin.route('/delete_activity/<id>')
-@login_required
-@role_required('1')
-def delete_activity(id):
-    activity = Activity.query.get(id)
-    db.session.delete(activity)
-    db.session.commit()
-    flash('Activity Deleted Successfully!', 'success')
     return redirect(url_for('admin.fee_management'))
 
 # Route to add a new user

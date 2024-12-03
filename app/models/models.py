@@ -143,8 +143,6 @@ class Receipt(db.Model):
     invoice = relationship('Invoice', back_populates='receipts')
 
 # Settings model
-
-
 class Settings(db.Model):
     __tablename__ = 'Settings'
     setting_key = db.Column('SettingKey', db.String, primary_key=True)
@@ -153,6 +151,11 @@ class Settings(db.Model):
     value_type = db.Column('ValueType', db.String, nullable=False)
     category = db.Column('Category', db.String, nullable=False)
 
+class Message(db.Model):
+    __tablename__ = 'Message'
+    id = db.Column('Id', db.String, primary_key=True)
+    name = db.Column('Name', db.String, nullable=False)
+    description = db.Column('Description', db.String, nullable=False)
 
 # StudentFeeAssignment model
 class StudentFeeAssignment(db.Model):
@@ -162,31 +165,12 @@ class StudentFeeAssignment(db.Model):
     student_id = db.Column('StudentId', db.String, ForeignKey('User.Id', ondelete='CASCADE'))
     fee_structure_id = db.Column('StructureId', db.String, ForeignKey(
         'FeeStructure.StructureId', ondelete='CASCADE'))
-    activity_id = db.Column('ActivityId', db.String, ForeignKey(
-        'Activity.ActivityId', ondelete='CASCADE'))
 
     # Relationships
     fee_structure = relationship(
         'FeeStructure', back_populates='student_fee_assignments')
-    activity = relationship(
-        'Activity', back_populates='student_fee_assignments')
     student = relationship('User', back_populates='student_fee_assignments')
     fee_record = relationship('FeeRecord', back_populates='fee_assignment')
-
-
-# Activity model
-class Activity(db.Model):
-    __tablename__ = 'Activity'
-    activity_id = db.Column('ActivityId', db.String,
-                            primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = db.Column('ActivityName', db.String, nullable=False)
-    description = db.Column('Description', db.String)
-    fee_amount = db.Column('Fee', db.Numeric(10, 2))
-
-    # Relationship
-    student_fee_assignments = relationship(
-        'StudentFeeAssignment', back_populates='activity')
-
 
 # Fee record model
 class FeeRecord(db.Model):
