@@ -100,12 +100,7 @@ def update_settings():
                     if form_value == 'on':  # Checkbox is checked, set to '1'
                         setting.setting_value = '1'
                     else:
-                        # Special handling for specific settings
-                        if setting.setting_key == 'late_fee_amount':
-                            # Convert to float, round to 2 decimal places, and convert back to string
-                            setting.setting_value = str(
-                                round(float(form_value), 2))
-                        elif setting.setting_key == 'telegram_bot_api_key' and form_value.strip() == '':
+                        if setting.setting_key == 'telegram_bot_api_key' and form_value.strip() == '':
                             # If the Telegram Bot API key is empty, set it to NULL
                             setting.setting_value = None
                         else:
@@ -128,6 +123,53 @@ def update_settings():
 
     # If it's a GET request, or in case of an error, stay on the settings page
     return render_template('admin/system_settings.html', settings=Settings.query.all(), app_name=app_name())
+
+
+@admin.route('/update_fee_settings', methods=['GET', 'POST'])
+@login_required
+@role_required('1')
+def update_fee_settings():
+    if request.method == 'POST':
+        try:
+            # Retrieve specific fee settings keys
+            late_fee_amount = request.form.get('late_fee_amount')
+            due_date = request.form.get('due_date')
+            discount_amount = request.form.get('discount_amount')
+
+            # Validate and update each setting individually
+            if late_fee_amount is not None:
+                # Convert to float, round to 2 decimal places, and update in the database
+                late_fee_setting = Settings.query.filter_by(setting_key='late_fee_amount').first()
+                late_fee_setting.setting_value = str(round(float(late_fee_amount), 2))
+
+            if due_date is not None:
+                # Ensure the value is an integer
+                due_date_setting = Settings.query.filter_by(setting_key='due_date').first()
+                due_date_setting.setting_value = str(int(due_date))
+
+            if discount_amount is not None:
+                # Convert to float, round to 2 decimal places, and update in the database
+                discount_setting = Settings.query.filter_by(setting_key='discount_amount').first()
+                discount_setting.setting_value = str(round(float(discount_amount), 2))
+
+            # Commit the changes to the database
+            db.session.commit()
+
+            # Flash success message and redirect
+            flash('Fee settings updated successfully.', 'success')
+            return redirect(url_for('admin.fee_management'))
+
+        except Exception as e:
+            # Flash error message in case of an exception
+            flash(f'An error occurred while updating the fee settings: {str(e)}', 'danger')
+
+    # For GET requests or error scenarios, render the settings page
+    fee_settings = {
+        'late_fee_amount': Settings.query.filter_by(setting_key='late_fee_amount').first(),
+        'due_date': Settings.query.filter_by(setting_key='due_date').first(),
+        'discount_amount': Settings.query.filter_by(setting_key='discount_amount').first()
+    }
+    return render_template('admin/fee_management.html', settings=fee_settings, app_name=app_name())
 
 
 # Route to view class assignment (empty for now)
@@ -250,9 +292,29 @@ def parent_student():
 @login_required
 @role_required('1')
 def fee_management():
-    # Fetch all fee structures and activities
+    # Fetch all fee structures from the database
     fee_structures = FeeStructure.query.all()
-    return render_template('admin/fee_management.html', fee_structures=fee_structures, app_name=app_name())
+
+    # Fetch specific settings related to fees
+    fee_settings = {
+        'late_fee_amount': Settings.query.filter_by(setting_key='late_fee_amount').first(),
+        'due_date': Settings.query.filter_by(setting_key='due_date').first(),
+        'discount_amount': Settings.query.filter_by(setting_key='discount_amount').first()
+    }
+
+    # Convert settings to a dictionary for easier access in the template
+    settings = {
+        key: setting.setting_value if setting else None
+        for key, setting in fee_settings.items()
+    }
+
+    return render_template(
+        'admin/fee_management.html',
+        fee_structures=fee_structures,
+        settings=settings,
+        app_name=app_name()
+    )
+
 
 @admin.route('/add_fee_structure', methods=['GET', 'POST'])
 @login_required

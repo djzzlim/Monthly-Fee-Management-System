@@ -4,6 +4,28 @@
 {% block card_title %}System Settings{% endblock %} 
 {% block card_content %}
 
+{% block custom_styles %}
+<style>
+    /* Add padding above and below each section */
+    h4 {
+        margin-top: 2rem; /* Adds space above the section title */
+        margin-bottom: 1rem; /* Adds space below the section title */
+    }
+
+    form {
+        margin-bottom: 2rem; /* Adds space below each form */
+    }
+
+    hr {
+        margin: 2rem 0; /* Adds vertical space around the horizontal rule */
+    }
+
+    table {
+        margin-bottom: 2rem; /* Adds space below the table */
+    }
+</style>
+{% endblock %}
+
 <p>Adjust the system configuration settings below:</p>
 
 <!-- Flash Messages -->
@@ -76,28 +98,6 @@
             <td><label for="smtp_email_password" class="form-label">SMTP Email Password</label></td>
             <td><input type="password" class="form-control" id="smtp_email_password" name="smtp_email_password" value="{{ settings['smtp_email_password'] }}" required></td>
         </tr>
-
-        <!-- Fee Settings -->
-        <tr><th colspan="2"><h4>Fee Settings</h4></th></tr>
-        <tr>
-            <td><label for="late_fee_amount" class="form-label">Late Fee Amount</label></td>
-            <td>
-                <input type="number" class="form-control" id="late_fee_amount" name="late_fee_amount" 
-                    value="{{ '%.2f' % (settings['late_fee_amount'] | float) }}" min="0" step="0.01" required>
-            </td>
-        </tr>
-        <tr>
-            <td><label for="due_date" class="form-label">Due Date (Days)</label></td>
-            <td><input type="number" class="form-control" id="due_date" name="due_date" value="{{ settings['due_date'] }}" min="0" required></td>
-        </tr>
-        <tr>
-            <td><label for="discount_amount" class="form-label">Discount Amount</label></td>
-            <td>
-                <input type="number" class="form-control" id="discount_amount" name="discount_amount" 
-                    value="{{ '%.2f' % (settings['discount_amount'] | float) }}" min="0" step="0.01" required>
-            </td>
-        </tr>
-
 
         <!-- Notification Settings -->
         <tr><th colspan="2"><h4>Notification Settings</h4></th></tr>

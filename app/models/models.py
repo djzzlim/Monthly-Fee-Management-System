@@ -151,12 +151,6 @@ class Settings(db.Model):
     value_type = db.Column('ValueType', db.String, nullable=False)
     category = db.Column('Category', db.String, nullable=False)
 
-class Message(db.Model):
-    __tablename__ = 'Message'
-    id = db.Column('Id', db.String, primary_key=True)
-    name = db.Column('Name', db.String, nullable=False)
-    description = db.Column('Description', db.String, nullable=False)
-
 # StudentFeeAssignment model
 class StudentFeeAssignment(db.Model):
     __tablename__ = 'StudentFeeAssignment'
