@@ -1,0 +1,64 @@
+{% extends "share/dashboard.html" %}
+
+{% block title %}
+  Payment History
+{% endblock %}
+
+{% block card_header %}
+  bg-info
+{% endblock %}
+
+{% block card_title %}
+  Payment History
+{% endblock %}
+
+{% block card_content %}
+  <p>Viewing payment history for: <strong>{{ selected_child.first_name }} {{ selected_child.last_name }}</strong></p>
+
+  {% if error_message %}
+    <div class="alert alert-danger" role="alert">
+      {{ error_message }}
+    </div>
+  {% endif %}
+
+  <!-- Payment History Table -->
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Date Paid</th>
+        <th>Receipt No</th>
+        <th>Payment Type</th>
+        <th>Paid Amount</th>
+        <th>Remark</th>
+        <th>Print Receipt</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if payment_history %}
+        {% for payment in payment_history %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ payment.payment_date }}</td>
+            <td>{{ payment.receipt.receipt_id if payment.receipt else 'N/A' }}</td>
+            <td>{{ payment.payment_method }}</td>
+            <td>{{ payment.amount_paid }}</td>
+            <td>{{ payment.remark }}</td>
+            <td>
+              <button class="btn btn-primary" onclick="printReceipt('{{ payment.history_id }}')">Print Receipt</button>
+            </td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="7" class="text-center">
+            <p class="alert alert-warning">No payment history available.</p>
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <a href="{{ url_for('parent.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+
+{% endblock %}

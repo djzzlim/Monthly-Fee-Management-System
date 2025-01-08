@@ -1,0 +1,45 @@
+<!-- Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="notificationModalLabel">Notifications</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group" id="notificationsList">
+          <!-- Notifications will be loaded here -->
+          <li class="list-group-item">Loading...</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AJAX Script for Loading Notifications -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    document.querySelector('.nav-link[data-bs-toggle="modal"]').addEventListener('click', function() {
+      fetch("{{ url_for('parent.ajax_notifications') }}", {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.notifications_html) {
+          document.getElementById('notificationsList').innerHTML = data.notifications_html;
+        } else {
+          console.error("Error loading notifications:", data.error);
+        }
+      })
+      .catch(error => {
+        console.error("AJAX error:", error);
+      });
+    });
+  });
+</script>

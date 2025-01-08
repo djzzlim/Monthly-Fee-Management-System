@@ -37,6 +37,8 @@ def login():
                 # Redirect to the dashboard based on the role
                 if current_user.role_id == '1':  # Admin
                     return redirect(url_for('admin.dashboard'))
+                elif current_user.role_id == '3':  # Parent
+                    return redirect(url_for('parent.dashboard'))
                 elif current_user.role_id == '4':  # Accountant
                     return redirect(url_for('accountant.dashboard'))
                 else:
@@ -79,7 +81,7 @@ def forgot_password():
             return render_template('auth/forgot_password.html')
 
         # Ensure user role is not 5
-        if user.role_id == '4':  # Check that the role is not 4 (Accountant or other non-reset roles)
+        if user.role_id == '5':  # Check that the role is not 4 (Accountant or other non-reset roles)
             flash('This account is not eligible for password reset.', 'danger')
             return render_template('auth/forgot_password.html')
 

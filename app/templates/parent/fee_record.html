@@ -1,0 +1,59 @@
+{% extends "share/dashboard.html" %}
+
+{% block title %}
+  Fee Record
+{% endblock %}
+
+{% block card_header %}
+  bg-success
+{% endblock %}
+
+{% block card_title %}
+  Fee Record
+{% endblock %}
+
+{% block card_content %}
+  <p>Viewing fee record for: <strong>{{ selected_child.first_name }} {{ selected_child.last_name }}</strong></p>
+
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Date Assigned</th>
+        <th>Invoice ID</th>
+        <th>Fee Assignment</th>
+        <th>Due Date</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Penalty</th>
+        <th>Total Amount</th>
+        <th>Print Invoice</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in fee_records %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ record.date_assigned }}</td>
+        <td>{{ record.invoice_id }}</td>
+        <td>{{ record.assignment.structure.description }}</td>
+        <td>{{ record.due_date }}</td>
+        <td>{{ record.assignment.structure.total_fee }}</td>
+        <td>{{ record.status.status_name if record.status else "Unknown" }}</td>
+        <td>{{ record.penalty if record.penalty else 0 }}</td>
+        <td>{{ record.amount_due + (record.penalty if record.penalty else 0) }}</td>
+        <td>
+          <button class="btn btn-primary" onclick="printInvoice('{{ record.fee_record_id }}')">Print Invoice</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not fee_records %}
+    <p class="alert alert-info">No FEE RECORDS</p>
+  {% endif %}
+
+  <a href="{{ url_for('parent.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "share/dashboard.html" %}
+
+{% block title %}
+  Make Payment
+{% endblock %}
+
+{% block card_header %}
+  bg-warning
+{% endblock %}
+
+{% block card_title %}
+  Make Payment
+{% endblock %}
+
+{% block card_content %}
+  <p>Make a payment for: <strong>{{ selected_child.first_name }} {{ selected_child.last_name }}</strong></p>
+
+  {% if total_due == 0 %}
+    <div class="alert alert-info" role="alert">
+      No fees are due for payment at the moment.
+    </div>
+  {% else %}
+    <form method="POST" action="{{ url_for('parent.make_payment') }}">
+      <!-- Display Fee Amount -->
+      <div class="mb-3">
+        <label for="amount" class="form-label">Amount Due</label>
+        <input type="number" class="form-control" id="amount" name="amount" value="RM {{ total_due_with_penalty }}" readonly>
+      </div>
+
+      <!-- Display Penalty Section -->
+      <div class="mb-3">
+        <label for="penalty" class="form-label">Penalty</label>
+        {% if total_penalty > 0 %}
+          <input type="text" class="form-control" id="penalty" value="RM {{ total_penalty }}" readonly>
+        {% else %}
+          <input type="text" class="form-control" id="penalty" value="No penalty at the moment" readonly>
+        {% endif %}
+      </div>
+
+      <!-- Payment Method Selection -->
+      <div class="mb-3">
+        <label for="payment_method" class="form-label">Payment Method</label>
+        <select class="form-select" id="payment_method" name="payment_method" required>
+          <option value="credit_card">Credit Card</option>
+          <option value="bank_transfer">Bank Transfer</option>
+          <option value="cash">Cash</option>
+          <option value="e_wallet">E-Wallet</option>
+        </select>
+      </div>
+
+      <!-- Remarks Section -->
+      <div class="mb-3">
+        <label for="remarks" class="form-label">Remarks</label>
+        <textarea class="form-control" id="remarks" name="remarks" rows="3" placeholder="Optional remark for the payment"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Submit Payment</button>
+    </form>
+  {% endif %}
+
+  <a href="{{ url_for('parent.dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+{% endblock %}
