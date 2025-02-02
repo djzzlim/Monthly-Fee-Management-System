@@ -105,17 +105,6 @@
             <td><label for="email_notifications" class="form-check-label">Enable Email Notifications</label></td>
             <td><input type="checkbox" class="form-check-input" id="email_notifications" name="email_notifications" {% if settings['email_notifications'] == '1' %}checked{% endif %}></td>
         </tr>
-        <tr>
-            <td><label for="telegram_notifications" class="form-check-label">Enable Telegram Notifications</label></td>
-            <td><input type="checkbox" class="form-check-input" id="telegram_notifications" name="telegram_notifications" {% if settings['telegram_notifications'] == '1' %}checked{% endif %}></td>
-        </tr>
-        <tr>
-            <td><label for="telegram_bot_api_key" class="form-label">Telegram Bot API Key</label></td>
-            <td>
-                <input type="text" class="form-control" id="telegram_bot_api_key" name="telegram_bot_api_key" 
-                       value="{{ settings['telegram_bot_api_key'] }}">
-            </td>
-        </tr>
 
         <!-- Security Settings -->
         <tr><th colspan="2"><h4>Security Settings</h4></th></tr>

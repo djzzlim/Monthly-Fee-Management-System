@@ -3,7 +3,7 @@ from flask import Blueprint, flash, jsonify, render_template, request, redirect,
 from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
 from .routes import role_required
-from ..models.models import User, ParentStudentRelation, StudentFeeAssignment, FeeStructure, Activity, FeeRecord, Settings, Invoice, Message, PaymentHistory  # Adjust import paths as needed
+from ..models.models import User, ParentStudentRelation, StudentFeeAssignment, FeeStructure, FeeRecord, Settings, PaymentHistory  # Adjust import paths as needed
 from weasyprint import HTML
 from io import BytesIO
 from flask import Response

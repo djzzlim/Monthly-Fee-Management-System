@@ -1,5 +1,14 @@
 {% extends "share/dashboard.html" %}
 
+{% block styles %}
+<style>
+    .hover-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+    }
+</style>
+{% endblock %} 
+
 {% block content %}
   {% block title %}
     Admin Dashboard
@@ -16,23 +25,61 @@
   {% block card_content %}
     <p>Welcome Admin! Here you can manage the entire school system.</p>
 
-    <ul>
-      <li>
-        <a href="{{ url_for('admin.manage_users') }}">User Management</a>
-      </li>
-      <li>
-        <a href="{{ url_for('admin.fee_management') }}">Fee Management</a>
-      </li>
-      <li>
-        <a href="{{ url_for('admin.class_assignments') }}">Class Assignments</a>
-      </li>
-      <li>
-        <a href="{{ url_for('admin.parent_student') }}">Parent-Student Data</a>
-      </li>
-      <li>
-        <a href="{{ url_for('admin.system_settings') }}">System Configuration</a>
-      </li>
-    </ul>
+    <div class="row">
+      <div class="col-md-4">
+          <a href="{{ url_for('admin.manage_users') }}"class="text-decoration-none">
+              <div class="card text-white mb-3 hover-card bg-primary"> <!-- style="background-color: #9a63ff;-->
+                  <div class="card-header">User Management</div>
+                  <div class="card-body">
+                      <h5 class="card-title">Manage Users</h5>
+                  </div>
+              </div>
+          </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{{ url_for('admin.fee_management') }}"class="text-decoration-none">
+            <div class="card text-white mb-3 hover-card bg-success"> <!-- style="background-color: #FF6392;-->
+                <div class="card-header">Fee Management</div>
+                <div class="card-body">
+                    <h5 class="card-title">Manage Fee Settings</h5>
+                </div>
+            </div>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{{ url_for('admin.class_assignments') }}"class="text-decoration-none">
+            <div class="card text-white mb-3 hover-card bg-warning"> <!-- style="background-color: #5ae666;-->
+                <div class="card-header">Class Assignments</div>
+                <div class="card-body">
+                    <h5 class="card-title">Assigning a class</h5>
+                </div>
+            </div>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{{ url_for('admin.parent_student') }}"class="text-decoration-none">
+            <div class="card text-white mb-3 hover-card bg-info"> <!-- style="background-color: #5ae666;-->
+                <div class="card-header">Parent-Student Data</div>
+                <div class="card-body">
+                    <h5 class="card-title">Manage Parent and Student Relationships</h5>
+                </div>
+            </div>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{{ url_for('admin.system_settings') }}"class="text-decoration-none">
+            <div class="card text-white mb-3 hover-card bg-secondary"> <!-- style="background-color: #5ae666;-->
+                <div class="card-header">System Configuration</div>
+                <div class="card-body">
+                    <h5 class="card-title">Configure System Settings<br><br></h5>
+                </div>
+            </div>
+        </a>
+      </div>
     
   {% endblock %}
 {% endblock %}

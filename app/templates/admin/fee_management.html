@@ -52,9 +52,9 @@
                 value="{{ '%.2f' % (settings['late_fee_amount'] | float) }}" min="0" step="0.01" required>
         </div>
         <div class="mb-3">
-            <label for="due_date" class="form-label">Due Date (Days)</label>
-            <input type="number" class="form-control" id="due_date" name="due_date" 
-                value="{{ settings['due_date'] }}" min="0" required>
+            <label for="due_date_reminder" class="form-label">Due Date (Days)</label>
+            <input type="number" class="form-control" id="due_date_reminder" name="due_date_reminder" 
+                value="{{ settings['due_date_reminder'] }}" min="0" required>
         </div>
         <div class="mb-3">
             <label for="discount_amount" class="form-label">Discount Amount</label>

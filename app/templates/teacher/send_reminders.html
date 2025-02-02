@@ -1,0 +1,65 @@
+{% extends "share/dashboard.html" %}
+
+{% block title %}Send Reminders{% endblock %}
+{% block card_header %}bg-info{% endblock %}
+{% block card_title %}Send Reminders{% endblock %}
+
+{% block card_content %}
+<div class="container mt-4">
+    <h4>Send Reminders to Parents</h4>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-dismissible fade show mt-3" role="alert">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Form to send reminders -->
+    <form method="POST" action="/send_reminders" class="mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <label for="messageTemplate" class="form-label">Select Message Template</label>
+                <select id="messageTemplate" name="messageTemplate" class="form-select">
+                    <option value="">Choose a template</option>
+                    <option value="overdue">Overdue Fee Reminder</option>
+                    <option value="upcoming">Upcoming Event Reminder</option>
+                    <option value="released">Fee Released Reminder</option>
+                    <option value="others">Others</option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="searchStudent" class="form-label">Search Student</label>
+                <input type="text" id="searchStudent" name="searchStudent" class="form-control" placeholder="Search specific student">
+            </div>
+        </div>
+
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6">
+                <label for="class" class="form-label">Select Class</label>
+                <select id="class" name="class" class="form-select">
+                    <option value="">Choose a class</option>
+                    <option value="all">All Classes</option>
+                    {% for class in classes %}
+                        <option value="{{ class.id }}">{{ class.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="customMessage" class="form-label">Custom Message</label>
+            <textarea id="customMessage" name="customMessage" class="form-control" rows="4" placeholder="Type your message here..."></textarea>
+        </div>
+
+        <div class="text-center">
+            <button type="Send Reminder" class="btn btn-primary btn-lg">Send Reminder</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

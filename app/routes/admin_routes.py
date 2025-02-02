@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
 from app import db  # Importing db from the app package
-# Import User and Role models from the models module
 from app.models.models import User, Role, Settings, Class, ClassAssignment, ParentStudentRelation, FeeStructure
 from .routes import role_required, app_name
 from sqlalchemy import func
@@ -89,42 +88,29 @@ def update_logo():
 def update_settings():
     if request.method == 'POST':
         try:
-            # Retrieve all settings from the database
             settings = Settings.query.all()
-
-            # Loop through settings and update their values based on form input
             for setting in settings:
                 form_value = request.form.get(setting.setting_key)
 
-                # Handle checkbox logic separately (checkboxes may or may not be included in the form submission)
-                if form_value is not None:
-                    if form_value == 'on':  # Checkbox is checked, set to '1'
-                        setting.setting_value = '1'
+                # Handle checkbox logic
+                if setting.setting_key == 'email_notifications':
+                    # Check if the checkbox is present in the form data
+                    if 'email_notifications' in request.form:
+                        setting.setting_value = '1'  # Checkbox is checked
                     else:
-                        if setting.setting_key == 'telegram_bot_api_key' and form_value.strip() == '':
-                            # If the Telegram Bot API key is empty, set it to NULL
-                            setting.setting_value = None
-                        else:
-                            setting.setting_value = form_value
+                        setting.setting_value = '0'  # Checkbox is unchecked
                 else:
-                    # If form_value is None, this means the checkbox is unchecked, set it to '0' (or default value)
-                    if setting.setting_key in ['email_notifications', 'sms_notifications']:
-                        setting.setting_value = '0'  # Unchecked checkboxes default to '0'
+                    # Handle non-checkbox fields
+                    if form_value is not None:
+                        setting.setting_value = form_value
 
-            # Commit the changes to the database
             db.session.commit()
-
-            # Redirect to the dashboard
             return redirect(url_for('admin.dashboard'))
 
         except Exception as e:
-            # If there's any error, flash an error message
-            flash(
-                f'An error occurred while updating the settings: {str(e)}', 'danger')
+            flash(f'An error occurred while updating the settings: {str(e)}', 'danger')
 
-    # If it's a GET request, or in case of an error, stay on the settings page
-    return render_template('admin/system_settings.html', settings=Settings.query.all(), app_name=app_name())
-
+    return render_template('admin/system_settings.html', settings={s.setting_key: s.setting_value for s in Settings.query.all()}, app_name=app_name())
 
 @admin.route('/update_fee_settings', methods=['GET', 'POST'])
 @login_required
@@ -134,7 +120,7 @@ def update_fee_settings():
         try:
             # Retrieve specific fee settings keys
             late_fee_amount = request.form.get('late_fee_amount')
-            due_date = request.form.get('due_date')
+            due_date_reminder = request.form.get('due_date_reminder')
             discount_amount = request.form.get('discount_amount')
 
             # Validate and update each setting individually
@@ -143,10 +129,10 @@ def update_fee_settings():
                 late_fee_setting = Settings.query.filter_by(setting_key='late_fee_amount').first()
                 late_fee_setting.setting_value = str(round(float(late_fee_amount), 2))
 
-            if due_date is not None:
+            if due_date_reminder is not None:
                 # Ensure the value is an integer
-                due_date_setting = Settings.query.filter_by(setting_key='due_date').first()
-                due_date_setting.setting_value = str(int(due_date))
+                due_date_setting = Settings.query.filter_by(setting_key='due_date_reminder').first()
+                due_date_setting.setting_value = str(int(due_date_reminder))
 
             if discount_amount is not None:
                 # Convert to float, round to 2 decimal places, and update in the database
@@ -166,10 +152,10 @@ def update_fee_settings():
 
     # For GET requests or error scenarios, render the settings page
     fee_settings = {
-        'late_fee_amount': Settings.query.filter_by(setting_key='late_fee_amount').first(),
-        'due_date': Settings.query.filter_by(setting_key='due_date').first(),
-        'discount_amount': Settings.query.filter_by(setting_key='discount_amount').first()
-    }
+    'late_fee_amount': Settings.query.filter_by(setting_key='late_fee_amount').first(),
+    'due_date_reminder': Settings.query.filter_by(setting_key='due_date_reminder').first(),
+    'discount_amount': Settings.query.filter_by(setting_key='discount_amount').first()
+}
     return render_template('admin/fee_management.html', settings=fee_settings, app_name=app_name())
 
 
@@ -242,8 +228,6 @@ def class_assignments():
         app_name=app_name()
     )
 
-
-
 # Route to view parent student (empty for now)
 @admin.route('/parent_student', methods=['GET', 'POST'])
 @login_required
@@ -299,7 +283,7 @@ def fee_management():
     # Fetch specific settings related to fees
     fee_settings = {
         'late_fee_amount': Settings.query.filter_by(setting_key='late_fee_amount').first(),
-        'due_date': Settings.query.filter_by(setting_key='due_date').first(),
+        'due_date_reminder': Settings.query.filter_by(setting_key='due_date_reminder').first(),
         'discount_amount': Settings.query.filter_by(setting_key='discount_amount').first()
     }
 
@@ -345,7 +329,6 @@ def edit_fee_structure(id):
     if request.method == 'POST':
         fee_structure.description = request.form['description']
         fee_structure.total_fee = request.form['total_fee']
-        fee_structure.other_field = request.form.get('other_field', '')  # Optional field, handle with .get()
 
         db.session.commit()
         flash('Fee Structure updated successfully!', 'success')

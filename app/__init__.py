@@ -23,14 +23,14 @@ def create_app():
     from .routes.auth import auth
     from .routes.accountant_routes import accountant
     from .routes.admin_routes import admin
-    # from .routes.education_routes import education
+    from .routes.teacher_routes import teacher
     from .routes.parent_routes import parent
 
     app.register_blueprint(routes, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(accountant, url_prefix='/accountant')
     app.register_blueprint(admin, url_prefix='/admin')
-    # app.register_blueprint(education, url_prefix='/education')
+    app.register_blueprint(teacher, url_prefix='/teacher')
     app.register_blueprint(parent, url_prefix='/parent')
 
     with app.app_context():

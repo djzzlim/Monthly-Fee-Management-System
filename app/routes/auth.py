@@ -37,6 +37,8 @@ def login():
                 # Redirect to the dashboard based on the role
                 if current_user.role_id == '1':  # Admin
                     return redirect(url_for('admin.dashboard'))
+                elif current_user.role_id == '2':  # Teacher
+                    return redirect(url_for('teacher.dashboard'))
                 elif current_user.role_id == '3':  # Parent
                     return redirect(url_for('parent.dashboard'))
                 elif current_user.role_id == '4':  # Accountant

@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from functools import wraps
 from .routes import role_required, app_name
 from app import db
-from app.models.models import FeeRecord, Invoice
+from app.models.models import FeeRecord
 from weasyprint import HTML
 import os
 
