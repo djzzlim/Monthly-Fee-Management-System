@@ -92,17 +92,8 @@ def update_settings():
             for setting in settings:
                 form_value = request.form.get(setting.setting_key)
 
-                # Handle checkbox logic
-                if setting.setting_key == 'email_notifications':
-                    # Check if the checkbox is present in the form data
-                    if 'email_notifications' in request.form:
-                        setting.setting_value = '1'  # Checkbox is checked
-                    else:
-                        setting.setting_value = '0'  # Checkbox is unchecked
-                else:
-                    # Handle non-checkbox fields
-                    if form_value is not None:
-                        setting.setting_value = form_value
+                if form_value is not None:
+                    setting.setting_value = form_value
 
             db.session.commit()
             return redirect(url_for('admin.dashboard'))

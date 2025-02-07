@@ -23,10 +23,10 @@
         <th>Invoice ID</th>
         <th>Fee Assignment</th>
         <th>Due Date</th>
-        <th>Amount</th>
+        <th>Amount (RM)</th>
         <th>Status</th>
         <th>Penalty</th>
-        <th>Total Amount</th>
+        <th>Total Amount (RM)</th>
         <th>Print Invoice</th>
       </tr>
     </thead>
@@ -35,23 +35,25 @@
       <tr>
         <td>{{ loop.index }}</td>
         <td>{{ record.date_assigned }}</td>
-        <td>{{ record.invoice_id }}</td>
+        <td>invoice_{{ record.fee_record_id }}</td>
         <td>{{ record.assignment.structure.description }}</td>
         <td>{{ record.due_date }}</td>
-        <td>{{ record.assignment.structure.total_fee }}</td>
+        <td>RM {{ record.amount_due }}</td>
         <td>{{ record.status.status_name if record.status else "Unknown" }}</td>
-        <td>{{ record.penalty if record.penalty else 0 }}</td>
-        <td>{{ record.amount_due + (record.penalty if record.penalty else 0) }}</td>
+        <td>RM {{ record.penalty if record.penalty else 0 }}</td>
+        <td>RM {{ record.amount_due + (record.penalty if record.penalty else 0) }}</td>
         <td>
-          <button class="btn btn-primary" onclick="printInvoice('{{ record.fee_record_id }}')">Print Invoice</button>
+          {% set invoice_path = url_for('parent.download_invoice', fee_record_id=record.fee_record_id) %}
+          <a href="{{ invoice_path }}" class="btn btn-primary" target="_blank">Print Invoice</a>
         </td>
+        
       </tr>
       {% endfor %}
     </tbody>
   </table>
 
   {% if not fee_records %}
-    <p class="alert alert-info">No FEE RECORDS</p>
+    <p class="alert alert-info">No Fee Records</p>
   {% endif %}
 
   <a href="{{ url_for('parent.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>

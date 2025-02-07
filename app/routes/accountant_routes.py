@@ -20,11 +20,11 @@ accountant = Blueprint('accountant', __name__)
 @role_required('4')
 def dashboard():
     # Calculate total fees: Sum of all fees (amount_due)
-    total_fees = db.session.query(db.func.sum(FeeRecord.amount_paid)).scalar()
+    total_fees = db.session.query(db.func.sum(FeeRecord.amount_due)).scalar()
 
     # Calculate overdue fees: Sum of overdue fees (where due_date < current date and amount_due > amount_paid)
-    overdue_fees = db.session.query(db.func.sum(FeeRecord.amount_due - FeeRecord.amount_paid)) \
-        .filter(FeeRecord.due_date < db.func.current_date(), FeeRecord.amount_due > FeeRecord.amount_paid) \
+    overdue_fees = db.session.query(db.func.sum(FeeRecord.amount_due - FeeRecord.amount_due)) \
+        .filter(FeeRecord.due_date < db.func.current_date(), FeeRecord.amount_due > FeeRecord.amount_due) \
         .scalar()
 
     # Count of invoices generated: Total number of invoices created

@@ -99,13 +99,6 @@
             <td><input type="password" class="form-control" id="smtp_email_password" name="smtp_email_password" value="{{ settings['smtp_email_password'] }}" required></td>
         </tr>
 
-        <!-- Notification Settings -->
-        <tr><th colspan="2"><h4>Notification Settings</h4></th></tr>
-        <tr>
-            <td><label for="email_notifications" class="form-check-label">Enable Email Notifications</label></td>
-            <td><input type="checkbox" class="form-check-input" id="email_notifications" name="email_notifications" {% if settings['email_notifications'] == '1' %}checked{% endif %}></td>
-        </tr>
-
         <!-- Security Settings -->
         <tr><th colspan="2"><h4>Security Settings</h4></th></tr>
         <tr>

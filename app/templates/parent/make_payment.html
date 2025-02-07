@@ -1,62 +1,104 @@
 {% extends "share/dashboard.html" %}
 
 {% block title %}
-  Make Payment
+    Make Payment
 {% endblock %}
 
 {% block card_header %}
-  bg-warning
+    bg-warning
 {% endblock %}
 
 {% block card_title %}
-  Make Payment
+    Make Payment
 {% endblock %}
 
 {% block card_content %}
-  <p>Make a payment for: <strong>{{ selected_child.first_name }} {{ selected_child.last_name }}</strong></p>
-
-  {% if total_due == 0 %}
-    <div class="alert alert-info" role="alert">
-      No fees are due for payment at the moment.
-    </div>
-  {% else %}
-    <form method="POST" action="{{ url_for('parent.make_payment') }}">
-      <!-- Display Fee Amount -->
-      <div class="mb-3">
-        <label for="amount" class="form-label">Amount Due</label>
-        <input type="number" class="form-control" id="amount" name="amount" value="RM {{ total_due_with_penalty }}" readonly>
-      </div>
-
-      <!-- Display Penalty Section -->
-      <div class="mb-3">
-        <label for="penalty" class="form-label">Penalty</label>
-        {% if total_penalty > 0 %}
-          <input type="text" class="form-control" id="penalty" value="RM {{ total_penalty }}" readonly>
-        {% else %}
-          <input type="text" class="form-control" id="penalty" value="No penalty at the moment" readonly>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
         {% endif %}
-      </div>
+    {% endwith %}
 
-      <!-- Payment Method Selection -->
-      <div class="mb-3">
-        <label for="payment_method" class="form-label">Payment Method</label>
-        <select class="form-select" id="payment_method" name="payment_method" required>
-          <option value="credit_card">Credit Card</option>
-          <option value="bank_transfer">Bank Transfer</option>
-          <option value="cash">Cash</option>
-          <option value="e_wallet">E-Wallet</option>
-        </select>
-      </div>
+    {% if payment_successful %}
+        <p class="alert alert-success">Payment successful!</p>
+    {% elif no_payment_due %}
+        <p class="alert alert-info">No payment due currently.</p>
+    {% else %}
+        <p>Make a payment for: <strong>{{ selected_child.first_name }} {{ selected_child.last_name }}</strong></p>
 
-      <!-- Remarks Section -->
-      <div class="mb-3">
-        <label for="remarks" class="form-label">Remarks</label>
-        <textarea class="form-control" id="remarks" name="remarks" rows="3" placeholder="Optional remark for the payment"></textarea>
-      </div>
+        <form method="POST" action="{{ url_for('parent.make_payment') }}">
+            <div class="mb-3">
+                <label for="fee_payment" class="form-label">Select Fee Payment</label>
+                <select class="form-select" id="fee_payment" name="fee_payment" required onchange="updateAmount()">
+                    {% for fee in unpaid_fees %}
+                        <option value="{{ fee.fee_record_id }}" data-amount="{{ fee.total_amount }}" data-penalty="{{ fee.late_fee_amount }}">
+                            Invoice ID: invoice_{{ fee.fee_record_id }} - Due: RM {{ fee.total_amount }}  
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-      <button type="submit" class="btn btn-primary">Submit Payment</button>
-    </form>
-  {% endif %}
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount Due</label>
+                <input type="text" class="form-control" id="amount" name="amount" value="RM {{ fee_record.total_amount if fee_record else '0' }}" readonly>
+            </div>
 
-  <a href="{{ url_for('parent.dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+            <div class="mb-3">
+                <label for="penalty" class="form-label">Penalty</label>
+                <input type="text" class="form-control" id="penalty" value="RM {{ total_penalty }}" readonly>
+            </div>
+
+            <div class="mb-3">
+                <label for="payment_method" class="form-label">Payment Method</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="payment_method" id="credit_card" value="Credit Card">
+                    <label class="form-check-label" for="Credit Card">
+                        Credit Card
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="payment_method" id="bank_transfer" value="Bank Transfer">
+                    <label class="form-check-label" for="Bank Transfer">
+                        Bank Transfer
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="payment_method" id="e_wallet" value="E-Wallet">
+                    <label class="form-check-label" for="E-Wallet">
+                        E-Wallet
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit Payment</button>
+        </form>
+    {% endif %}
+
+    <a href="{{ url_for('parent.dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+
+    <script>
+        function updateAmount() {
+            var selectedOption = document.getElementById("fee_payment").selectedOptions[0];
+            document.getElementById("amount").value = "RM " + selectedOption.getAttribute("data-amount");
+            document.getElementById("penalty").value = "RM " + selectedOption.getAttribute("data-penalty");
+        }
+
+        document.querySelector('form').addEventListener('submit', function(event) {
+            var paymentMethodSelected = document.querySelector('input[name="payment_method"]:checked');
+            var errorDiv = document.getElementById("payment-error");
+
+            if (!paymentMethodSelected) {
+                errorDiv.textContent = "Please select a payment method before submitting.";
+                errorDiv.classList.remove("d-none"); // Show error message
+                event.preventDefault(); // Prevent form submission
+            } else {
+                errorDiv.classList.add("d-none"); // Hide error if fixed
+            }
+        });
+    </script>
+    
 {% endblock %}

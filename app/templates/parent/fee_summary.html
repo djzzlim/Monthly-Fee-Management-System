@@ -30,58 +30,48 @@
     </div>
   </div>
 
-  <!-- Fee Details Table -->
-  <h5>Fee Details:</h5>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>No.</th>
-        <th>Amount Due (RM)</th>
-        <th>Due Date</th>
-        <th>Penalty (RM)</th>
-        <th>Exceeded Days</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      
-      {% for fee in fee_records %}
+  <!-- Check if there are any unpaid fees -->
+  {% set unpaid_fees = fee_records | selectattr('status.status_id', 'in', ['status001', 'status003']) | list %}
 
-        <!-- Display fee details, excluding "Paid" status -->
-        {% if fee.status.status_id != "status002" %}
+  {% if unpaid_fees %}
+    <!-- Fee Details Table -->
+    <h5>Fee Details:</h5>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Invoice ID</th>
+          <th>Amount Due (RM)</th>
+          <th>Due Date</th>
+          <th>Penalty (RM)</th>
+          <th>Exceeded Days</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fee in unpaid_fees %}
           <tr>
             <td>{{ loop.index }}</td>
+            <td>invoice_{{ fee.fee_record_id }}</td>
             <td>RM {{ fee.amount_due }}</td>
             <td>{{ fee.due_date.strftime('%Y-%m-%d') if fee.due_date else 'N/A' }}</td>
-            <td>RM {{ fee.penalty or 0 }}</td>
+            <td>RM {{ fee.late_fee_amount or 0 }}</td>
             <td>{{ (current_date - fee.due_date).days if fee.due_date and current_date > fee.due_date else 0 }}</td>
             <td>
               {% if fee.status.status_id == "status001" %}
                 Pending
               {% elif fee.status.status_id == "status003" %}
                 Overdue
-              {% else %}
-                Paid
               {% endif %}
-              
             </td>
           </tr>
-        {% endif %}
-        
-        
-        
-      {% endfor %}
-
-      
-    </tbody>
-  </table>
-
-  {% for fee in fee_records %} 
-        <!-- Display message if all fees are paid -->
-        {% if fee.status.status_id == "status002" %}
-          <p class="alert alert-info">No payment due currently.</p>
-        {% endif %}
-  {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <!-- Display message if all fees are paid -->
+    <p class="alert alert-info">No payment due currently.</p>
+  {% endif %}
 
   <hr>
 

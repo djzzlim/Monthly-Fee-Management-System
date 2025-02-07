@@ -33,6 +33,13 @@
       .then(data => {
         if (data.notifications_html) {
           document.getElementById('notificationsList').innerHTML = data.notifications_html;
+          
+          // Add gap between each notification and black border
+          const notifications = document.querySelectorAll('#notificationsList .list-group-item');
+          notifications.forEach(notification => {
+            notification.style.marginBottom = '10px';  // Adds gap between notifications
+            notification.style.border = '2px solid black';  // Adds black border
+          });
         } else {
           console.error("Error loading notifications:", data.error);
         }

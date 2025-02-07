@@ -29,8 +29,7 @@
         <th>Date Paid</th>
         <th>Receipt No</th>
         <th>Payment Type</th>
-        <th>Paid Amount</th>
-        <th>Remark</th>
+        <th>Paid Amount (RM)</th>
         <th>Print Receipt</th>
       </tr>
     </thead>
@@ -39,13 +38,14 @@
         {% for payment in payment_history %}
           <tr>
             <td>{{ loop.index }}</td>
-            <td>{{ payment.payment_date }}</td>
-            <td>{{ payment.receipt.receipt_id if payment.receipt else 'N/A' }}</td>
+            <td>{{ payment.payment_date.strftime('%Y-%m-%d') }}</td>
+            <td>receipt_{{ payment.history_id }}</td>
             <td>{{ payment.payment_method }}</td>
-            <td>{{ payment.amount_paid }}</td>
-            <td>{{ payment.remark }}</td>
+            <td>RM {{ payment.amount_paid }}</td>
             <td>
-              <button class="btn btn-primary" onclick="printReceipt('{{ payment.history_id }}')">Print Receipt</button>
+              <a href="{{ url_for('parent.download_receipt', payment_history_id=payment.history_id) }}" class="btn btn-primary">
+                Print Receipt
+              </a>
             </td>
           </tr>
         {% endfor %}
