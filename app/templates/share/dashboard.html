@@ -5,17 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Dashboard{% endblock %}</title>
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <!-- Bootstrap Icons -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
-      rel="stylesheet"
-    />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+
     {% block styles %} {% endblock %}
   </head>
+
   <body>
     <!-- Header (Common to all users) -->
     <header class="bg-primary text-white p-3">
@@ -69,37 +65,54 @@
                   <i class="bi bi-gear"></i> System Settings
                 </a>
               </li>
-            {% endif %}
-          </ul>
+
+            {% elif current_user.role_id == '2' %}
+              <li class="nav-item">
+                <a class="nav-link text-white" href="{{ url_for('teacher.fee_status') }}">
+                  <i class="bi bi-clipboard-check"></i> Class Payment Status
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-white" href="{{ url_for('teacher.generate_total_fee') }}">
+                  <i class="bi bi-bar-chart-line"></i> Total Fee Overview
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-white" href="{{ url_for('teacher.send_reminders') }}">
+                  <i class="bi bi-bell"></i> Send Reminders
+                </a>
+              </li>
 
             <!-- Parent-specific navigation -->
-            {% if current_user.role_id == '3' %}
+            {% elif current_user.role_id == '3' %}
               <li class="nav-item">
                 <a class="nav-link text-white" href="{{ url_for('parent.fee_summary') }}">
-                  Fee Summary
+                  <i class="bi bi-cash-coin"></i> Fee Summary
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link text-white" href="{{ url_for('parent.fee_record') }}">
-                  Fee Record
+                  <i class="bi bi-clipboard-data"></i> Fee Record
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link text-white" href="{{ url_for('parent.make_payment') }}">
-                  Make Payment
+                  <i class="bi bi-credit-card"></i> Make Payment
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link text-white" href="{{ url_for('parent.payment_history') }}">
-                  Payment History
+                  <i class="bi bi-clock-history"></i> Payment History
                 </a>
               </li>
-			  <!-- Notification button -->
-				<li class="nav-item">
-					<a class="nav-link text-white" href="#" data-bs-toggle="modal" data-bs-target="#notificationModal">
-					<i class="bi bi-bell-fill"></i> Notifications
-					</a>
-				</li>
+              <li class="nav-item position-relative">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#notificationModal">
+                  <i class="bi bi-bell-fill"></i> Notifications
+                </a>
+              </li>
+
+            {% elif current_user.role_id == '4' %}
+              <!-- Accountant-specific navigation -->
             {% endif %}
           </ul>
 
@@ -115,6 +128,7 @@
       </div>
     </header>
 
+    <!-- Main Content -->
     <main class="container my-5" style="padding-bottom: 50px;">
       <div class="card">
         <div class="card-header text-white {% block card_header %}{% endblock %}">

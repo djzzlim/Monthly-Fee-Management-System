@@ -1,7 +1,7 @@
 import random
 from flask import Blueprint, flash, jsonify, render_template, request, redirect, url_for, session
 from flask_login import login_required, current_user
-from .routes import role_required
+from .routes import role_required, app_name
 from ..models.models import User, ParentStudentRelation, StudentFeeAssignment, FeeRecord, PaymentHistory, Notification  
 import datetime
 import logging
@@ -46,7 +46,7 @@ def dashboard():
             # Fetch the selected child's details
             selected_child = db.session.query(User).filter_by(id=selected_child_id).first()
 
-        return render_template('parent/parent.html', children=children, selected_child=selected_child)
+        return render_template('parent/parent.html', children=children, selected_child=selected_child, app_name=app_name())
     except Exception as e:
         return render_template('error.html', error_message=str(e))
 
@@ -123,7 +123,8 @@ def fee_summary():
             total_overdue_fees=total_overdue_fees,
             total_penalty=total_penalty,
             total_amount_with_penalty=total_amount_with_penalty,
-            current_date=current_date
+            current_date=current_date,
+            app_name=app_name()
         )
     except Exception as e:
         return render_template('error.html', error_message=str(e))
@@ -146,7 +147,7 @@ def fee_record():
         selected_child = db.session.query(User).filter_by(id=selected_child_id).first()
 
         if not selected_child:
-            return render_template('error.html', error_message="Selected child not found.")
+            return render_template('error.html', error_message="Selected child not found.", app_name=app_name())
 
         # Fetch fee assignments
         fee_assignments = db.session.query(StudentFeeAssignment).filter_by(student_id=selected_child_id).all()
@@ -168,7 +169,8 @@ def fee_record():
             fee_records=fee_records,
             total_amount_due=total_amount_due,
             total_penalty=total_penalty,
-            total_amount_with_penalty=total_amount_with_penalty
+            total_amount_with_penalty=total_amount_with_penalty,
+            app_name=app_name()
         )
     except Exception as e:
         return render_template('error.html', error_message=str(e))
@@ -272,7 +274,8 @@ def make_payment():
                                fee_record=fee_record,
                                total_penalty=total_penalty,
                                no_payment_due=no_payment_due,
-                               payment_successful=request.args.get('payment_successful'))
+                               payment_successful=request.args.get('payment_successful'), 
+                               app_name=app_name())
 
     except Exception as e:
         db.session.rollback()
@@ -395,14 +398,14 @@ def payment_history():
         fee_assignment_ids = [assignment.fee_assignment_id for assignment in fee_assignments]
 
         if not fee_assignment_ids:
-            return render_template('parent/payment_history.html', selected_child=selected_child, payment_history=[])
+            return render_template('parent/payment_history.html', selected_child=selected_child, payment_history=[], app_name=app_name())
 
         # Fetch all fee records linked to those assignments
         fee_records = db.session.query(FeeRecord).filter(FeeRecord.fee_assignment_id.in_(fee_assignment_ids)).all()
         fee_record_ids = [record.fee_record_id for record in fee_records]
 
         if not fee_record_ids:
-            return render_template('parent/payment_history.html', selected_child=selected_child, payment_history=[])
+            return render_template('parent/payment_history.html', selected_child=selected_child, payment_history=[], app_name=app_name())
 
         # Fetch payment history for the selected child's fee records
         payment_history = (
@@ -416,7 +419,8 @@ def payment_history():
         return render_template(
             'parent/payment_history.html',
             selected_child=selected_child,
-            payment_history=payment_history
+            payment_history=payment_history, 
+            app_name=app_name()
         )
 
     except Exception as e:
@@ -430,11 +434,15 @@ def payment_history():
 def download_receipt(payment_history_id):
     try:
         # Define the receipt directory
-        receipt_dir = os.path.join(os.getcwd(), 'archives', 'receipts')
+        receipt_dir = os.path.join(os.getcwd(), 'app', 'archives', 'receipts')
 
         # Construct the expected receipt filename
         receipt_filename = f'receipt_{payment_history_id}.pdf'
         receipt_path = os.path.join(receipt_dir, receipt_filename)
+
+        print("Receipt Path:", receipt_path)
+        print("File Exists:", os.path.exists(receipt_path))
+
 
         # Check if the file exists
         if not os.path.exists(receipt_path):
@@ -501,7 +509,8 @@ def notification_dashboard():
     return render_template(
         'parent/notification_dashboard.html',
         notifications=formatted_notifications,
-        selected_child=selected_child
+        selected_child=selected_child, 
+        app_name=app_name()
     )
 
 

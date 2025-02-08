@@ -2,6 +2,7 @@ from app import db
 from flask_login import UserMixin
 from sqlalchemy.orm import relationship
 from sqlalchemy import ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
 import uuid
 
 # Role model
@@ -60,10 +61,15 @@ class ClassAssignment(db.Model):
 # FeeStructure model
 class FeeStructure(db.Model):
     __tablename__ = 'FeeStructure'
-    structure_id = db.Column('StructureId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    structure_id = db.Column(
+        'StructureId', 
+        db.String, 
+        primary_key=True, 
+        default=lambda: f"structure-{str(uuid.uuid4())[:8]}"
+    )
     description = db.Column('Description', db.String, nullable=False)
     total_fee = db.Column('TotalFee', db.Numeric(10, 2), nullable=False)
-
+    
     # Relationships
     student_assignments = relationship('StudentFeeAssignment', back_populates='structure')
 

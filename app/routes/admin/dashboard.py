@@ -5,7 +5,6 @@ from . import admin
 from app.models.models import User
 from app.routes.routes import role_required, app_name
 
-
 @admin.route('/')
 @login_required
 @role_required('1')
