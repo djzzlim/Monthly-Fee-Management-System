@@ -1,6 +1,17 @@
 {% extends "share/dashboard.html" %} {% block title %}Manage Users{% endblock %}
 {% block card_header %}bg-danger{% endblock %} {% block card_title %}Manage
 Users{% endblock %} {% block card_content %}
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="alert alert-info">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
 <p>Welcome Admin! Here you can manage user accounts in the system.</p>
 
 <div class="mb-4">

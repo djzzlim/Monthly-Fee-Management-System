@@ -22,7 +22,7 @@ def create_app():
     from .routes.routes import routes
     from .routes.auth import auth
     from .routes.accountant_routes import accountant
-    from .routes.admin_routes import admin
+    from .routes.admin import admin
     from .routes.teacher_routes import teacher
     from .routes.parent_routes import parent
 

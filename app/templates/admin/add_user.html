@@ -94,65 +94,63 @@ User{% endblock %} {% block card_content %}
 
 <script>
 	function displayPasswordRequirements(policy) {
-        const requirementsElement = document.getElementById("password-requirements");
-        const passwordInput = document.getElementById("password");
+		const requirementsElement = document.getElementById("password-requirements");
+		const passwordInput = document.getElementById("password");
 
-        // If the policy is "strong"
-        if (policy === "strong") {
-            requirementsElement.innerText = 'Password must be at least 8 characters long, contain at least one number and one special character.';
-            passwordInput.setAttribute("placeholder", "Password must be at least 8 characters, with numbers and symbols");
-        } else {
-            // If the policy is "simple"
-            requirementsElement.innerText = 'Password must be at least 6 characters long.';
-            passwordInput.setAttribute("placeholder", "Password must be at least 6 characters");
-        }
-    }
+		// If the policy is "strong"
+		if (policy === "strong") {
+			requirementsElement.innerText = 'Password must be at least 8 characters long, contain at least one number and one special character.';
+			passwordInput.setAttribute("placeholder", "Password must be at least 8 characters, with numbers and symbols");
+		} else {
+			// If the policy is "simple"
+			requirementsElement.innerText = 'Password must be at least 6 characters long.';
+			passwordInput.setAttribute("placeholder", "Password must be at least 6 characters");
+		}
+	}
 
-    function validatePassword() {
-        const password = document.getElementById("password").value;
-        const policy = "{{ password_policy }}";  // Pass the policy from Flask as a string
-        const requirementsElement = document.getElementById("password-requirements");
+	function validatePassword() {
+		const password = document.getElementById("password").value;
+		const policy = "{{ password_policy }}";  // Pass the policy from Flask as a string
+		const requirementsElement = document.getElementById("password-requirements");
 
-        // Validation for strong password
-        if (policy === "strong") {
-            const strongPasswordRegex = /^(?=.*[0-9])(?=.*[\W_]).{8,}$/; // At least 8 characters, includes number and symbol
-            if (!strongPasswordRegex.test(password)) {
-                requirementsElement.innerText = "Password must be at least 8 characters long, contain at least one number and one special character.";
-            } else {
-                requirementsElement.innerText = "Password is valid.";
-            }
-        } else {
-            // Simple password validation (at least 6 characters)
-            if (password.length < 6) {
-                requirementsElement.innerText = "Password must be at least 6 characters long.";
-            } else {
-                requirementsElement.innerText = "Password is valid.";
-            }
-        }
-    }
+		// Validation for strong password
+		if (policy === "strong") {
+			const strongPasswordRegex = /^(?=.*[0-9])(?=.*[\W_]).{8,}$/; // At least 8 characters, includes number and symbol
+			if (!strongPasswordRegex.test(password)) {
+				requirementsElement.innerText = "Password must be at least 8 characters long, contain at least one number and one special character.";
+			} else {
+				requirementsElement.innerText = "Password is valid.";
+			}
+		} else {
+			// Simple password validation (at least 6 characters)
+			if (password.length < 6) {
+				requirementsElement.innerText = "Password must be at least 6 characters long.";
+			} else {
+				requirementsElement.innerText = "Password is valid.";
+			}
+		}
+	}
 
-    // Initialize the password policy on page load
-    document.addEventListener("DOMContentLoaded", function() {
-        const passwordPolicy = "{{ password_policy }}";  // Pass the policy from Flask as a string
-        displayPasswordRequirements(passwordPolicy); // Display the requirements
-    });
+	// Function to toggle the password field visibility based on the selected role
+	function togglePasswordField() {
+		const roleSelect = document.getElementById("role");
+		const passwordField = document.getElementById("password-field");
 
-    // Function to toggle the password field visibility based on the selected role
-    function togglePasswordField() {
-        const roleSelect = document.getElementById("role");
-        const passwordField = document.getElementById("password-field");
+		// Hide password field if role id is "5" (for students)
+		if (roleSelect.value === "5") {
+			passwordField.style.display = "none";
+			document.getElementById("password").removeAttribute("required");
+		} else {
+			passwordField.style.display = "block";
+			document.getElementById("password").setAttribute("required", "required");
+		}
+	}
 
-        // Hide password field if role id is "4" (for students)
-        if (roleSelect.value === "4") {
-            passwordField.style.display = "none";
-            document.getElementById("password").removeAttribute("required");
-        } else {
-            passwordField.style.display = "block";
-            document.getElementById("password").setAttribute("required", "required");
-        }
-    }
-
-    // Initialize the function to set the field display on page load
-    document.addEventListener("DOMContentLoaded", togglePasswordField);
+	// Initialize the password policy and field display on page load
+	document.addEventListener("DOMContentLoaded", function() {
+		const passwordPolicy = "{{ password_policy }}";  // Pass the policy from Flask as a string
+		displayPasswordRequirements(passwordPolicy); // Display the requirements
+		togglePasswordField(); // Set the field display based on the selected role
+	});
 </script>
 {% endblock %}

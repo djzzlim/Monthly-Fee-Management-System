@@ -1,13 +1,13 @@
 import random
 from flask import Blueprint, flash, jsonify, render_template, request, redirect, url_for, session
 from flask_login import login_required, current_user
-from sqlalchemy.orm import joinedload
 from .routes import role_required
-from ..models.models import User, ParentStudentRelation, StudentFeeAssignment, FeeStructure, FeeRecord, Settings, PaymentHistory, Notification  # Adjust import paths as needed
+from ..models.models import User, ParentStudentRelation, StudentFeeAssignment, FeeRecord, PaymentHistory, Notification  
 import datetime
 import logging
 import os
 from fpdf import FPDF
+import pytz
 from flask import send_from_directory
 from .. import db
 
@@ -106,10 +106,11 @@ def fee_summary():
             records = db.session.query(FeeRecord).filter_by(fee_assignment_id=assignment.fee_assignment_id).all()
             fee_records.extend(records)
 
-        # Initialize totals
-        total_amount_due = sum(record.amount_due for record in fee_records if record.status_id != "status002")  # Exclude paid fees
-        total_penalty = sum(record.late_fee_amount for record in fee_records if record.status_id != "status002")
-        total_amount_with_penalty = total_amount_due + total_penalty
+        # Calculate fee summaries
+        total_pending_fees = sum(record.total_amount for record in fee_records if record.status_id == "status001")
+        total_overdue_fees = sum(record.total_amount for record in fee_records if record.status_id == "status003")
+        total_penalty = sum(record.late_fee_amount or 0 for record in fee_records if record.status_id == "status003")
+        total_amount_with_penalty = total_pending_fees + total_overdue_fees + total_penalty
 
         # Ensure current_date is passed to the template
         current_date = datetime.datetime.now().date()
@@ -118,13 +119,15 @@ def fee_summary():
             'parent/fee_summary.html',
             selected_child=selected_child,
             fee_records=fee_records,
-            total_amount_due=total_amount_due,
+            total_pending_fees=total_pending_fees,
+            total_overdue_fees=total_overdue_fees,
             total_penalty=total_penalty,
             total_amount_with_penalty=total_amount_with_penalty,
-            current_date=current_date  # Pass current_date here
+            current_date=current_date
         )
     except Exception as e:
         return render_template('error.html', error_message=str(e))
+
 
 
 @parent.route('/fee_record')
@@ -176,7 +179,7 @@ def fee_record():
 def download_invoice(fee_record_id):
     try:
         # Define the invoice directory
-        invoice_dir = os.path.join(os.getcwd(), 'app', 'archives', 'invoices')
+        invoice_dir = os.path.join(os.getcwd(), 'archives', 'invoices')
 
         # Construct the expected invoice filename
         invoice_filename = f'invoice_{fee_record_id}.pdf'
@@ -193,42 +196,35 @@ def download_invoice(fee_record_id):
         return render_template('error.html', error_message=str(e))
 
 
-
 @parent.route('/make_payment', methods=['GET', 'POST'])
 @login_required
 @role_required('3')
 def make_payment():
     try:
-        # Get the selected child from the session
         user_specific_key = f'selected_child_id_{current_user.id}'
         selected_child_id = session.get(user_specific_key)
 
         if not selected_child_id:
             return redirect(url_for('parent.dashboard'))
 
-        # Fetch the selected child
         selected_child = db.session.query(User).filter_by(id=selected_child_id).first()
         if not selected_child:
             return render_template('error.html', error_message="Selected child not found.")
 
-        # Fetch unpaid fee records for the selected child (excluding status '002')
         unpaid_fees = (
             db.session.query(FeeRecord)
             .join(StudentFeeAssignment)
             .filter(
                 StudentFeeAssignment.student_id == selected_child.id,
-                FeeRecord.status_id.in_(['status001', 'status003'])  # Only show unpaid or pending fees
+                FeeRecord.status_id.in_(['status001', 'status003'])
             )
             .all()
         )
 
-        no_payment_due = len(unpaid_fees) == 0  # True if no fees available for payment
+        no_payment_due = len(unpaid_fees) == 0
         total_penalty = 0
-        fee_record = None
-
-        if not no_payment_due:
-            fee_record = unpaid_fees[0]  # Default to first unpaid fee
-            total_penalty = fee_record.late_fee_amount if fee_record else 0
+        fee_record = unpaid_fees[0] if not no_payment_due else None
+        total_penalty = fee_record.late_fee_amount if fee_record else 0
 
         if request.method == 'POST':
             fee_payment_id = request.form.get('fee_payment')
@@ -243,22 +239,24 @@ def make_payment():
                 flash('Please select a payment method.', 'danger')
                 return redirect(url_for('parent.make_payment'))
 
-            # Generate PaymentHistoryId in 'ph<new number>' format
             last_payment = db.session.query(PaymentHistory).order_by(PaymentHistory.history_id.desc()).first()
             new_number = int(last_payment.history_id[2:]) + 1 if last_payment else 1
             new_payment_id = f'ph{new_number}'
+
+            # Malaysia Time (UTC+8)
+            malaysia_tz = pytz.timezone('Asia/Kuala_Lumpur')
+            malaysia_time = datetime.datetime.now(malaysia_tz)
 
             new_payment = PaymentHistory(
                 history_id=new_payment_id,
                 fee_record_id=selected_fee_record.fee_record_id,
                 amount_paid=selected_fee_record.total_amount,
                 payment_method=payment_method,
-                payment_date=datetime.datetime.utcnow()
+                payment_date=malaysia_time,  
             )
 
-            # Update fee record status to 'PAID' (status002)
             selected_fee_record.status_id = 'status002'
-            selected_fee_record.last_updated_date = datetime.datetime.utcnow()
+            selected_fee_record.last_updated_date = malaysia_time  # Ensure MYT is stored
 
             db.session.add(new_payment)
             db.session.commit()
@@ -266,15 +264,15 @@ def make_payment():
             # Generate PDF Receipt
             generate_receipt_pdf(new_payment_id, selected_child, selected_fee_record, payment_method)
 
-            return redirect(url_for('parent.make_payment', payment_successful=True))  # Redirect after success
+            return redirect(url_for('parent.make_payment', payment_successful=True, payment_history_id=new_payment_id))
 
         return render_template('parent/make_payment.html',
-                              selected_child=selected_child,
-                              unpaid_fees=unpaid_fees,
-                              fee_record=fee_record,
-                              total_penalty=total_penalty,
-                              no_payment_due=no_payment_due,
-                              payment_successful=request.args.get('payment_successful'))  # Pass success flag
+                               selected_child=selected_child,
+                               unpaid_fees=unpaid_fees,
+                               fee_record=fee_record,
+                               total_penalty=total_penalty,
+                               no_payment_due=no_payment_due,
+                               payment_successful=request.args.get('payment_successful'))
 
     except Exception as e:
         db.session.rollback()
@@ -282,81 +280,96 @@ def make_payment():
 
 def generate_receipt_pdf(payment_history_id, selected_child, fee_record, payment_method):
     try:
-        # Define the file path
-        receipt_folder = os.path.join(os.getcwd(), 'app', 'archives', 'receipts')
+        receipt_folder = os.path.join(os.getcwd(), 'archives', 'receipts')
         if not os.path.exists(receipt_folder):
             os.makedirs(receipt_folder)
 
         receipt_filename = f"receipt_{payment_history_id}.pdf"
         receipt_path = os.path.join(receipt_folder, receipt_filename)
 
-        # Create PDF object
+        # Fetch Payment Date from Database (Already in MYT)
+        payment = db.session.query(PaymentHistory).filter_by(history_id=payment_history_id).first()
+        payment_date_str = payment.payment_date.strftime('%Y-%m-%d %H:%M:%S') 
+
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
         pdf.add_page()
 
-        # Add logo at the top
         logo_path = os.path.join(os.getcwd(), 'app', 'static', 'logo.png')
         pdf.image(logo_path, x=10, y=8, w=30)
 
-        # Title and receipt info
         pdf.set_font('Arial', 'B', 18)
-        pdf.set_text_color(0, 102, 204)  # Blue for title
+        pdf.set_text_color(0, 102, 204)
         pdf.cell(200, 10, txt="Payment Receipt", ln=True, align='C')
-        pdf.ln(20)  # Increased space after title
+        pdf.ln(20)
 
-        # Date and Payment ID section, now moved down
-        pdf.set_font('Arial', '', 12)
-        pdf.set_text_color(0, 0, 0)  # Black for the rest
-        pdf.cell(100, 10, f"Date: {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
-        pdf.cell(100, 10, f"Receipt ID: receipt_{payment_history_id}", ln=True)
-        pdf.ln(10)  # Line break for better spacing
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font('Arial', 'B', 12)  
+        pdf.cell(30, 10, "Date:", ln=False)
 
-        # Customer Section (Child)
+        pdf.set_font('Arial', '', 12)  
+        pdf.cell(70, 10, f"{payment_date_str} MYT", ln=True)
+        
+        pdf.set_font('Arial', 'B', 12)  
+        pdf.cell(40, 10, "Receipt ID:", ln=False)
+
+        pdf.set_font('Arial', '', 12)  
+        pdf.cell(60, 10, f"receipt_{payment_history_id}", ln=True)
+
+        pdf.ln(10)
+
+
+        pdf.set_text_color(0, 0, 0)
         pdf.set_font('Arial', 'B', 12)
         pdf.cell(100, 10, f"Child Name:", ln=False)
         pdf.set_font('Arial', '', 12)
         pdf.cell(100, 10, f"{selected_child.first_name} {selected_child.last_name}", ln=True)
-        pdf.ln(5)  # Line break
+        pdf.ln(5)
 
-        # Fee Description
+        pdf.set_text_color(0, 0, 0)
         pdf.set_font('Arial', 'B', 12)
         pdf.cell(100, 10, f"Fee Description:", ln=False)
         pdf.set_font('Arial', '', 12)
         pdf.cell(100, 10, f"{fee_record.assignment.structure.description}", ln=True)
         pdf.ln(5)
 
-        # Payment Details (Amount and Penalty)
+        pdf.set_text_color(0, 0, 0)
         pdf.set_font('Arial', 'B', 12)
-        pdf.cell(100, 10, f"Amount Paid:", ln=False)
+        pdf.cell(100, 10, f"Payment Details", ln=True)
         pdf.set_font('Arial', '', 12)
-        pdf.cell(100, 10, f"RM {fee_record.total_amount}", ln=True)
-        pdf.ln(5)
 
-        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(100, 10, f"Amount Due:", ln=False)
+        pdf.cell(100, 10, f"RM {fee_record.amount_due}", ln=True)
+
         pdf.cell(100, 10, f"Penalty:", ln=False)
-        pdf.set_font('Arial', '', 12)
         pdf.cell(100, 10, f"RM {fee_record.late_fee_amount}", ln=True)
-        pdf.ln(5)
 
-        # Payment Method
+        pdf.cell(100, 10, f"Discount:", ln=False)
+        pdf.cell(100, 10, f"RM {fee_record.discount_amount}", ln=True)
+
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(100, 10, f"Total Amount Due:", ln=False)
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(100, 10, f"RM {fee_record.total_amount}", ln=True)
+        pdf.ln(10)
+
+        pdf.set_text_color(0, 0, 0)
         pdf.set_font('Arial', 'B', 12)
         pdf.cell(100, 10, f"Payment Method:", ln=False)
         pdf.set_font('Arial', '', 12)
         pdf.cell(100, 10, f"{payment_method}", ln=True)
+        pdf.ln(10)
+
+        pdf.set_font('Arial', 'I', 10)
+        pdf.set_text_color(150, 150, 150)
+        pdf.cell(200, 10, txt="Thank you for your payment!", ln=True, align='C')
         pdf.ln(5)
 
-        # Footer Section with Thank You
-        pdf.set_font('Arial', 'I', 10)
-        pdf.set_text_color(150, 150, 150)  # Light gray color for footer
-        pdf.cell(200, 10, txt="Thank you for your payment!", ln=True, align='C')
-        pdf.ln(5)  # Space at the bottom of the receipt
-
-        # Save the PDF
         pdf.output(receipt_path)
 
     except Exception as e:
         print(f"Error generating receipt PDF: {str(e)}")
+
 
 
 @parent.route('/payment_history')
@@ -417,7 +430,7 @@ def payment_history():
 def download_receipt(payment_history_id):
     try:
         # Define the receipt directory
-        receipt_dir = os.path.join(os.getcwd(), 'app', 'archives', 'receipts')
+        receipt_dir = os.path.join(os.getcwd(), 'archives', 'receipts')
 
         # Construct the expected receipt filename
         receipt_filename = f'receipt_{payment_history_id}.pdf'
@@ -525,10 +538,10 @@ def ajax_notifications():
             # Prepare HTML for the notification
             notifications_html += f"""
                 <li class="list-group-item" style="background-color: #f0f8ff;">
-                    <p style="text-align:center; text-transform: uppercase; font-size: 20px; margin-bottom: 10px;">
+                    <p style="text-align:center; text-transform: uppercase; font-size: 17px; margin-bottom: 10px;">
                         <strong>{notification.message_type}</strong>
                     </p>
-                    <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 13px;">
                         <span><strong>Date:</strong> {date}</span>
                         <span><strong>Time:</strong> {time}</span>
                         <span><strong>Sent by: </strong>Teacher {teacher_name}</span>
