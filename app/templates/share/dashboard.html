@@ -112,7 +112,26 @@
               </li>
 
             {% elif current_user.role_id == '4' %}
-              <!-- Accountant-specific navigation -->
+              <li class="nav-item">
+                <a class="nav-link text-white" href="{{ url_for('accountant.fee_records') }}">
+                  <i class="bi bi-cash-coin"></i> Manage Fee Records
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-white" href="{{ url_for('accountant.financial_reports') }}">
+                  <i class="bi bi-bar-chart"></i> Financial Reports
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-white" href="{{ url_for('accountant.generate_invoices') }}">
+                  <i class="bi bi-file-earmark-text"></i> Generate Invoices
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-white" href="{{ url_for('accountant.overdue_records') }}">
+                  <i class="bi bi-exclamation-triangle"></i> Overdue Payments
+                </a>
+              </li>
             {% endif %}
           </ul>
 

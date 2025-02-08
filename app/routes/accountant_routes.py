@@ -72,7 +72,7 @@ def fee_records():
             fee.status_id = "status003"  # Mark as overdue
             db.session.commit()
 
-    return render_template("accountant/fee_records.html", fee_records=fee_records)
+    return render_template("accountant/fee_records.html", fee_records=fee_records, app_name=app_name())
 
 
 @accountant.route('/fee_records/delete/<fee_record_id>', methods=['POST'])
@@ -151,7 +151,8 @@ def add_fee_records():
 
     return render_template(
         'accountant/add_fee_record.html',
-        fee_assignments=fee_assignments
+        fee_assignments=fee_assignments,
+        app_name=app_name()
     )
 
 
@@ -194,7 +195,7 @@ def edit_fee_record(fee_record_id):
         except Exception as e:
             db.session.rollback()
 
-    return render_template("accountant/edit_fee_record.html", fee_record=fee_record, fee_assignments=fee_assignments)
+    return render_template("accountant/edit_fee_record.html", fee_record=fee_record, fee_assignments=fee_assignments, app_name=app_name())
 
 
 @accountant.route('/financial_reports')
@@ -230,7 +231,7 @@ def financial_reports():
                         "date": report_date  # Now it's a datetime object with both date and time
                     })
 
-    return render_template("accountant/financial_reports.html", reports=reports)
+    return render_template("accountant/financial_reports.html", reports=reports, app_name=app_name())
 
 
 @accountant.route('/view_report/<report_id>')
@@ -299,7 +300,7 @@ def generate_report():
 
         return redirect(url_for("accountant.financial_reports"))
 
-    return render_template("accountant/generate_report.html")
+    return render_template("accountant/generate_report.html", app_name=app_name())
 
 
 @accountant.route('/financial_reports/generate/fee_collection_report', methods=['GET', 'POST'])
@@ -325,7 +326,7 @@ def generate_fees_report():
         ).all()
 
         # Show the date selection page with fee records for the default range
-        return render_template("accountant/fee_collection_report.html", start_date=start_date, end_date=end_date, fee_records=fee_records)
+        return render_template("accountant/fee_collection_report.html", start_date=start_date, end_date=end_date, fee_records=fee_records, app_name=app_name())
 
     elif request.method == 'POST':
         start_date = request.form.get('start_date')
@@ -355,7 +356,7 @@ def generate_fees_report():
         if request.form.get('action') == 'generate':
             # Generate report logic (same as before)
             report_html = render_template(
-                "accountant/fee_collection_report_pdf.html", fee_records=fee_records, datetime=datetime)
+                "accountant/fee_collection_report_pdf.html", fee_records=fee_records, datetime=datetime, app_name=app_name())
             timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
             report_filename = f"fc_{timestamp}.pdf"
             report_path = os.path.join(
@@ -366,7 +367,7 @@ def generate_fees_report():
             return redirect(url_for('accountant.financial_reports'))
 
         # Show the date selection page with fee records for the selected range
-        return render_template("accountant/fee_collection_report.html", start_date=start_date, end_date=end_date, fee_records=fee_records)
+        return render_template("accountant/fee_collection_report.html", start_date=start_date, end_date=end_date, fee_records=fee_records, app_name=app_name())
 
 
 @accountant.route('/financial_reports/generate/overdue_report', methods=['GET', 'POST'])
@@ -394,7 +395,8 @@ def generate_overdue_report():
             "accountant/overdue_fee_report.html",
             start_date=start_date,
             end_date=end_date,
-            overdue_records=overdue_records
+            overdue_records=overdue_records, 
+            app_name=app_name()
         )
 
     elif request.method == 'POST':
@@ -425,7 +427,8 @@ def generate_overdue_report():
             report_html = render_template(
                 "accountant/overdue_fee_report_pdf.html",
                 overdue_records=overdue_records,
-                datetime=datetime
+                datetime=datetime,
+                app_name=app_name()
             )
             timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
             report_filename = f"op_{timestamp}.pdf"
@@ -440,7 +443,8 @@ def generate_overdue_report():
             "accountant/overdue_fee_report.html",
             start_date=start_date,
             end_date=end_date,
-            overdue_records=overdue_records
+            overdue_records=overdue_records, 
+            app_name=app_name()
         )
 
 
@@ -459,7 +463,7 @@ def generate_financial_health_report():
         statistics = calculate_financial_statistics(start_date, end_date)
 
         return render_template("accountant/financial_health_report.html",
-                               start_date=start_date, end_date=end_date, statistics=statistics)
+                               start_date=start_date, end_date=end_date, statistics=statistics, app_name=app_name())
 
     elif request.method == 'POST':
         start_date = request.form.get('start_date')
@@ -481,7 +485,7 @@ def generate_financial_health_report():
 
         if request.form.get('action') == 'generate':
             report_html = render_template("accountant/financial_health_report_pdf.html",
-                                          statistics=statistics, datetime=datetime)
+                                          statistics=statistics, datetime=datetime, app_name=app_name())
             timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
             report_filename = f"fh_{timestamp}.pdf"
             report_path = os.path.join(
@@ -491,7 +495,7 @@ def generate_financial_health_report():
             return redirect(url_for('accountant.financial_reports'))
 
         return render_template("accountant/financial_health_report.html",
-                               start_date=start_date, end_date=end_date, statistics=statistics)
+                               start_date=start_date, end_date=end_date, statistics=statistics, app_name=app_name())
 
 
 def get_past_total_collected(start_date, end_date):
@@ -667,7 +671,8 @@ def generate_invoices():
         invoices=invoices,
         # Ensure date appears in input fields
         start_date=start_date.strftime("%Y-%m-%d"),
-        end_date=end_date.strftime("%Y-%m-%d")
+        end_date=end_date.strftime("%Y-%m-%d"), 
+        app_name=app_name()
     )
 
 
@@ -734,7 +739,8 @@ def create_invoice():
                                         address="Your Kindergarten Address",
                                         smtp_email="contact@kindergarten.com",
                                         contact_number="+60 12-345 6789",
-                                        current_year=datetime.now().year)
+                                        current_year=datetime.now().year,
+                                        app_name=app_name())
 
         # Save PDF without opening it
         pdf_path = os.path.join(INVOICE_DIR, f"invoice_{fee_record_id}.pdf")
@@ -743,7 +749,7 @@ def create_invoice():
         # Redirect back to the invoice list
         return redirect(url_for('accountant.generate_invoices'))
 
-    return render_template("accountant/create_invoice.html", fee_records=FeeRecord.query.all())
+    return render_template("accountant/create_invoice.html", fee_records=FeeRecord.query.all(), app_name=app_name())
 
 
 @accountant.route('/overdue_records', methods=['GET', 'POST'])
@@ -769,4 +775,4 @@ def overdue_records():
 
         return redirect(url_for('accountant.overdue_records'))
 
-    return render_template("accountant/overdue_records.html", overdue_fees=overdue_fees)
+    return render_template("accountant/overdue_records.html", overdue_fees=overdue_fees, app_name=app_name())
