@@ -1,47 +1,103 @@
-{% extends "share/dashboard.html" %}
+{% extends "share/dashboard.html" %} {% block title %}Fee Records{% endblock %}
+{% block card_header %}bg-info{% endblock %} {% block card_title %}Fee Records{%
+endblock %} {% block card_content %}
 
-{% block title %}Fee Records{% endblock %}
-{% block card_header %}bg-info{% endblock %}
-{% block card_title %}Fee Records{% endblock %}
-
-{% block card_content %}
 <p>
   Here are the fee records. Payment status is shown based on the amount paid.
 </p>
 
-<!-- Display Fee Records -->
-<table class="table table-bordered">
-  <thead>
-    <tr>
-      <th>Fee ID</th>
-      <th>Amount Due</th>
-      <th>Amount Paid</th>
-      <th>Due Date</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for record in fee_records %}
-    <tr>
-      <td>
-        <a href="{{ url_for('accountant.fee_record_detail', fee_id=record.fee_id) }}">{{ record.fee_id }}</a>
-      </td>      
-      <td>RM {{ "{:,.2f}".format(record.amount_due) }}</td>
-      <td>RM {{ "{:,.2f}".format(record.amount_paid) }}</td>
-      <td>{{ record.due_date }}</td>
-      <td>
-        {% if record.amount_paid == 0 %}
-          <span class="text-danger">Not Paid</span>
-        {% elif record.amount_paid < record.amount_due %}
-          <span class="text-warning">Partially Paid</span>
-        {% elif record.amount_paid == record.amount_due %}
-          <span class="text-success">Paid</span>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<!-- Add New Record Button -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="mb-0">Student Fee Records</h5>
+  <a href="{{ url_for('accountant.add_fee_records') }}" class="btn btn-success">
+    <i class="fas fa-plus"></i> Add New Record
+  </a>
+</div>
+
+<!-- Make the table responsive -->
+<div class="table-responsive">
+  <table class="table table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>Record ID</th>
+        <th>Student Name</th>
+        <th>Fee Description</th>
+        <th>Tuition Fee (RM)</th>
+        <th>Penalty (RM)</th>
+        <th>Discount (RM)</th>
+        <th>Total Amount (RM)</th>
+        <th>Due Date</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record, assignment, student, fee, status in fee_records %}
+      <tr>
+        <td>{{ record.fee_record_id }}</td>
+        <td>{{ student.first_name }} {{ student.last_name }}</td>
+        <td>{{ fee.description }}</td>
+        <td>RM {{ record.amount_due }}</td>
+        <td>RM {{ record.late_fee_amount or '0.00' }}</td>
+        <td>RM {{ record.discount_amount or '0.00' }}</td>
+        <td>RM {{ record.total_amount }}</td>
+        <td>{{ record.due_date.strftime('%Y-%m-%d') }}</td>
+        <td>
+          {% if status.status_id == 'status001' %}
+          <span class="badge bg-warning">Unpaid</span>
+          {% elif status.status_id == 'status002' %}
+          <span class="badge bg-success">Paid</span>
+          {% else %}
+          <span class="badge bg-danger">Overdue</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="d-flex gap-2">
+            <!-- Edit Button -->
+            <a
+              href="{{ url_for('accountant.edit_fee_record', fee_record_id=record.fee_record_id) }}"
+              class="btn btn-primary btn-sm"
+              >Edit</a
+            >
+
+            <!-- Delete Form -->
+            <form
+              action="{{ url_for('accountant.delete_fee_record', fee_record_id=record.fee_record_id) }}"
+              method="POST"
+              class="d-inline"
+            >
+              <button type="submit" class="btn btn-danger btn-sm delete-btn">
+                Remove
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if not fee_records %}
+<p class="text-center text-muted">No fee records available.</p>
+{% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const deleteButtons = document.querySelectorAll(".delete-btn");
+
+    deleteButtons.forEach((button) => {
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
+        const confirmation = confirm(
+          "Are you sure you want to delete this fee record?"
+        );
+        if (confirmation) {
+          this.closest("form").submit();
+        }
+      });
+    });
+  });
+</script>
 
 {% endblock %}
-

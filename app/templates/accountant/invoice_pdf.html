@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+      crossorigin="anonymous"
+    />
+    <title>Invoice #{{ invoice_id }}</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f9f9f9;
+        color: #333;
+      }
+      .container {
+        margin-top: 2rem;
+        padding: 0 15px;
+      }
+      .card {
+        border-radius: 1rem;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+        background: white;
+        border: none;
+      }
+      h1,
+      h2 {
+        color: #0066cc;
+      }
+      .item-table th,
+      .item-table td {
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      .item-table th {
+        background-color: #f7f7f7;
+      }
+      .total-row {
+        text-align: right;
+        font-weight: bold;
+      }
+      .footer {
+        margin-top: 2rem;
+        text-align: center;
+        font-size: 0.9rem;
+        color: #777;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <div class="card-body">
+          <!-- School Information -->
+          <div class="text-center mb-4">
+            <h1>{{ kindergarten_name }} Kindergarten</h1>
+            <p>{{ address }}</p>
+            <p>Email: {{ smtp_email }} | Phone: {{ contact_number }}</p>
+          </div>
+
+          <!-- Invoice Information -->
+          <h2>Invoice #{{ invoice_id }}</h2>
+          <p>Invoice Date: {{ invoice_date.strftime('%d %B %Y') }}</p>
+          <p>Due Date: {{ due_date.strftime('%d %B %Y') }}</p>
+
+          <!-- Parent and Student Information -->
+          <h3>Student & Parent Information</h3>
+          <table class="table">
+            <tr>
+              <td><strong>Student Name:</strong></td>
+              <td>{{ student.first_name }} {{ student.last_name }}</td>
+            </tr>
+            <tr>
+              <td><strong>Parent(s) Name:</strong></td>
+              <td>
+                {% for parent in parents %} {{ parent.first_name }} {{
+                parent.last_name }} ({{ parent.email }})<br />
+                {% endfor %}
+              </td>
+            </tr>
+          </table>
+
+          <!-- Breakdown of Charges -->
+          <h3>Fee Breakdown</h3>
+          <table class="table item-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Fee</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ fee_structure.description }}</td>
+                <td>RM {{ "%.2f"|format(total_fee) }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Total Fee Calculation -->
+          <h3>Total Fee Calculation</h3>
+          <table class="table">
+            <tr>
+              <td><strong>Total Fee:</strong></td>
+              <td>RM {{ "%.2f"|format(total_fee) }}</td>
+            </tr>
+            <tr>
+              <td><strong>Discounts:</strong></td>
+              <td>- RM {{ "%.2f"|format(discounts) }}</td>
+            </tr>
+            {% if overdue_months > 0 %}
+            <tr>
+              <td>
+                <strong
+                  >Late Penalties ({{ overdue_months }} month{{ 's' if
+                  overdue_months > 1 else '' }}):</strong
+                >
+              </td>
+              <td>RM {{ "%.2f"|format(late_fee_amount) }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+              <td><strong>Final Amount Due:</strong></td>
+              <td>RM {{ "%.2f"|format(final_amount_due) }}</td>
+            </tr>
+          </table>
+
+          <!-- Payment Terms -->
+          <h3>Payment Terms</h3>
+          <p>
+            Please make the payment by the due date to avoid late fees. We
+            accept cash, credit card, or bank transfers. Bank details are
+            available upon request. Late payments will incur an additional
+            charge of RM {{ "%.2f"|format(late_fee_amount) }}.
+          </p>
+
+          <!-- Notes -->
+          <h3>Notes</h3>
+          <p>
+            Thank you for entrusting us with your child's education and
+            development. If you have any questions or need assistance, please
+            contact our office.
+          </p>
+
+          <!-- Footer -->
+          <div class="footer">
+            <p>
+              © {{ current_year }} {{ kindergarten_name }} Kindergarten. All
+              rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

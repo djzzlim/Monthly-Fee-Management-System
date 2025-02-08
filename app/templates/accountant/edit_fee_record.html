@@ -1,0 +1,114 @@
+{% extends "share/dashboard.html" %} 
+{% block title %}Fee Record{% endblock %} 
+{% block card_header %}bg-info{% endblock %} 
+{% block card_title %}Fee Record{% endblock %} 
+{% block card_content %}
+
+<p>Modify the details below to update the fee record.</p>
+
+<div class="card">
+  <div class="card-header bg-warning text-white">
+    <h2>Edit Fee Record Details</h2>
+  </div>
+  <div class="card-body">
+    <form action="{{ url_for('accountant.edit_fee_record', fee_record_id=fee_record.fee_record_id) }}" method="POST">
+      <!-- Fee Assignment Selection -->
+      <div class="mb-3">
+        <label for="feeAssignment" class="form-label">Fee Assignment</label>
+        <select class="form-select" id="feeAssignment" name="fee_assignment_id" required>
+          <option value="" disabled>Select Fee Assignment</option>
+          {% for assignment, student, fee in fee_assignments %}
+          <option value="{{ assignment.fee_assignment_id }}" data-fee="{{ fee.total_fee }}" 
+                  data-student="{{ student.first_name }} {{ student.last_name }}" 
+                  data-description="{{ fee.description }}"
+                  {% if fee_record.fee_assignment_id == assignment.fee_assignment_id %}selected{% endif %}>
+            {{ student.first_name }} {{ student.last_name }} - {{ fee.description }} (RM {{ fee.total_fee }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Amount Due -->
+      <div class="mb-3">
+        <label for="amount_due" class="form-label">Amount Due (RM)</label>
+        <input type="number" class="form-control" id="amount_due" name="amount_due" value="{{ fee_record.amount_due }}" required />
+      </div>
+
+      <!-- Penalty -->
+      <div class="mb-3">
+        <label for="penalty" class="form-label">Penalty (RM)</label>
+        <input type="number" class="form-control" id="penalty" name="penalty" value="{{ fee_record.late_fee_amount }}" min="0"/>
+      </div>
+
+      <!-- Discount -->
+      <div class="mb-3">
+        <label for="discount" class="form-label">Discount (RM)</label>
+        <input type="number" class="form-control" id="discount" name="discount" value="{{ fee_record.discount_amount }}" min="0"/>
+      </div>
+
+      <!-- Due Date -->
+      <div class="mb-3">
+        <label for="dueDate" class="form-label">Due Date</label>
+        <input type="date" class="form-control" id="dueDate" name="due_date" value="{{ fee_record.due_date.strftime('%Y-%m-%d') }}" required/>
+      </div>
+
+      <!-- Fee Record Summary -->
+      <div class="card mt-4">
+        <div class="card-header bg-light">
+          <h5>Fee Record Summary</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Student:</strong> <span id="summaryStudent">-</span></p>
+          <p><strong>Fee Structure:</strong> <span id="summaryDescription">-</span></p>
+          <p><strong>Tuition Fee:</strong> RM <span id="tuitionFee">0.00</span></p>
+          <p><strong>Discount:</strong> RM <span id="discountAmount">0.00</span></p>
+          <p><strong>Penalty:</strong> RM <span id="penaltyAmount">0.00</span></p>
+          <p><strong>Total Amount Due:</strong> RM <span id="totalAmount">0.00</span></p>
+          <p><strong>Due Date:</strong> <span id="summaryDueDate">-</span></p>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="d-flex justify-content-end mt-4">
+        <a href="{{ url_for('accountant.fee_records') }}" class="btn btn-secondary me-2">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const feeAssignment = document.getElementById("feeAssignment");
+    const amountDue = document.getElementById("amount_due");
+    const penalty = document.getElementById("penalty");
+    const discount = document.getElementById("discount");
+    const dueDate = document.getElementById("dueDate");
+
+    function updateSummary() {
+      const selectedAssignment = feeAssignment.options[feeAssignment.selectedIndex];
+      const tuitionFee = selectedAssignment ? parseFloat(selectedAssignment.dataset.fee) || 0 : 0;
+      const studentName = selectedAssignment ? selectedAssignment.dataset.student || '-' : '-';
+      const feeDescription = selectedAssignment ? selectedAssignment.dataset.description || '-' : '-';
+      const penaltyAmount = parseFloat(penalty.value) || 0;
+      const discountAmount = parseFloat(discount.value) || 0;
+      const totalAmount = Math.max(tuitionFee + penaltyAmount - discountAmount, 0);
+
+      document.getElementById("summaryStudent").textContent = studentName;
+      document.getElementById("summaryDescription").textContent = feeDescription;
+      document.getElementById("tuitionFee").textContent = tuitionFee.toFixed(2);
+      document.getElementById("discountAmount").textContent = discountAmount.toFixed(2);
+      document.getElementById("penaltyAmount").textContent = penaltyAmount.toFixed(2);
+      document.getElementById("totalAmount").textContent = totalAmount.toFixed(2);
+      document.getElementById("summaryDueDate").textContent = dueDate.value || "-";
+    }
+
+    [feeAssignment, amountDue, penalty, discount, dueDate].forEach((input) => {
+      input.addEventListener("input", updateSummary);
+    });
+
+    updateSummary();  // Update summary on page load
+  });
+</script>
+
+{% endblock %}

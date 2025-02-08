@@ -92,6 +92,7 @@ class FeeRecord(db.Model):
     fee_record_id = db.Column('FeeRecordId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     fee_assignment_id = db.Column('FeeAssignmentId', db.String, ForeignKey('StudentFeeAssignment.FeeAssignmentId', ondelete='CASCADE'))
     status_id = db.Column('StatusId', db.String, ForeignKey('PaymentStatus.StatusId', ondelete='SET NULL'))
+    flagged_for_followup = db.Column('FlaggedForFollowUp', db.Integer, nullable=False, default=0)  # 0 = Not Flagged, 1 = Flagged
     date_assigned = db.Column('DateAssigned', db.Date, nullable=False)
     due_date = db.Column('DueDate', db.Date, nullable=False)
     amount_due = db.Column('AmountDue', db.Numeric(10, 2), nullable=False)
