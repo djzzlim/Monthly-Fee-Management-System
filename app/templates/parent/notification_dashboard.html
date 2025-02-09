@@ -10,7 +10,7 @@
 <div class="container mt-4">
     <h4 class="text-center">
             <i class="bi bi-bell-fill"></i> Notifications for 
-            <span class="text-dark">{{ selected_child.first_name }} {{ selected_child.last_name }}</span>
+            <span class="text-dark"><strong>{{ selected_child.first_name }} {{ selected_child.last_name }}</strong></span>
     </h4>
 
     <!-- Sort Button -->
@@ -40,7 +40,16 @@
                             </p>
                             <hr>
                             <p><strong>Dear {{ notification.student_name }}'s Parent,</strong></p>
-                            <p class="text-dark">{{ notification.message_text }}</p>
+                            
+                            <!-- Display Remaining Lines Only for Payment Confirmation -->
+                            {% if notification.message_type == "Payment Confirmation" %}
+                                {% for line in notification.remaining_lines %}
+                                    <p class="text-dark">{{ line }}</p>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-dark">{{ notification.first_two_lines }}</p>
+                            {% endif %}
+                            
                             <p class="text-end"><strong>Best Regards,</strong></p>
                             <p class="text-end text-muted"><strong>Teacher {{ notification.teacher_name }}</strong></p>
                         </div>
@@ -64,13 +73,12 @@
 
 <!-- Custom CSS -->
 <style>
-
     html, body {
         height: 100%;
         margin: 0;
         display: flex;
         flex-direction: column;
-      }
+    }
 
     /* Scrollable Container */
     .notifications-container {

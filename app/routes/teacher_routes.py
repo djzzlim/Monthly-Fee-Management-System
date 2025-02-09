@@ -110,7 +110,7 @@ def get_students():
     teacher_classes = (
         db.session.query(ClassAssignment.class_id)
         .filter(ClassAssignment.teacher_id == current_user.id)
-        .subquery()
+        .scalar_subquery()
     )
 
     # Query to get students assigned to the teacher's classes
@@ -125,8 +125,6 @@ def get_students():
         query = query.join(Class, Class.class_id == ClassAssignment.class_id).filter(Class.class_name == class_name)
 
     students = query.all()
-    print(f"DEBUG: Retrieved students: {students}")  # Debugging
-
     if not students:
         return jsonify({"students": []})
 
@@ -144,7 +142,7 @@ def send_reminders():
         search_student = request.form.get('searchStudent')
         selected_class = request.form.get('class_name')
         custom_message = request.form.get('Message')  
-        message_type = request.form.get('messageType')  # NEW: Extracted message type from UI
+        message_type = request.form.get('messageType')
 
         template = None
         if message_template_id:
@@ -178,6 +176,7 @@ def send_reminders():
 
         batch_size = 5
         notifications = []
+        skipped_students = 0  # Counter for students skipped due to missing statuses
 
         for index, student in enumerate(students, 1):
             last_number += 1  
@@ -189,7 +188,7 @@ def send_reminders():
 
             message_text = original_message_text  
 
-            if message_template_id:
+            if message_template_id:  
                 fee_record = (
                     db.session.query(FeeRecord)
                     .join(StudentFeeAssignment, StudentFeeAssignment.fee_assignment_id == FeeRecord.fee_assignment_id)
@@ -200,19 +199,29 @@ def send_reminders():
                 )
 
                 if not fee_record:
+                    skipped_students += 1
                     continue  
 
-                if fee_record.status.status_id == 'status001' and template.message_temp_id == 'template1':  
+                fee_status = fee_record.status.status_id  
+
+                # ✅ Ensure correct template is used for the respective fee status
+                if fee_status == 'status001':  # Unpaid Fees
+                    if template.message_temp_id != 'template1':  
+                        skipped_students += 1
+                        continue  # Skip if wrong template is selected
                     message_text = template.template_text.replace('{amount}', str(fee_record.total_amount))
                     message_text = message_text.replace('{date}', str(fee_record.due_date.strftime('%Y-%m-%d')))
                 
-                elif fee_record.status.status_id == 'status003' and template.message_temp_id == 'template2':  
+                elif fee_status == 'status003':  # Overdue Fees
+                    if template.message_temp_id != 'template2':  
+                        skipped_students += 1
+                        continue  # Skip if wrong template is selected
                     message_text = template.template_text.replace('{amount}', str(fee_record.total_amount))
                     message_text = message_text.replace('{date}', str(fee_record.due_date.strftime('%Y-%m-%d')))
                 else:
-                    continue
+                    skipped_students += 1
+                    continue  # Skip if the status is not relevant
 
-            # Malaysia Time (UTC+8)
             malaysia_tz = pytz.timezone('Asia/Kuala_Lumpur')
             malaysia_time = datetime.datetime.now(malaysia_tz)
 
@@ -220,7 +229,7 @@ def send_reminders():
                 notification_id=notification_id,
                 teacher_id=current_user.id,
                 student_id=student.id,
-                message_type=message_type,  # UPDATED: Store the message type as seen in the UI
+                message_type=message_type,
                 message_text=message_text,
                 timestamp=malaysia_time
             )
@@ -238,7 +247,14 @@ def send_reminders():
 
         try:
             db.session.commit()
-            flash('Reminders sent successfully!', 'success')
+            if skipped_students > 0:
+                if search_student and search_student != "all" and len(students) == 1:
+                    student = students[0]  # Get the single student object
+                    flash(f'Student "{student.first_name} {student.last_name}" does not have the required fee status or template mismatch.', 'warning')
+                else:
+                    flash(f'Some students were skipped due to missing fee statuses or template mismatches.', 'warning')
+            else:
+                flash('Reminders sent successfully!', 'success')
         except Exception as e:
             db.session.rollback()
             flash(f'Error sending reminders: {e}', 'danger')
@@ -250,54 +266,70 @@ def send_reminders():
     ).distinct().all()
     class_names = [class_name[0] for class_name in class_names]
 
-    templates = db.session.query(MessageTemplate).all()
+    templates = db.session.query(MessageTemplate).filter(MessageTemplate.message_temp_id != 'template3').all()
 
     return render_template('teacher/send_reminders.html', class_names=class_names, templates=templates, app_name=app_name())
-
+   
 
 @teacher.route('/generate-total-fee')
 @login_required
 @role_required('2')
 def generate_total_fee():
-    # Get selected class from query parameters
     selected_class = request.args.get('class_name', None)
 
-    # Query to fetch student fee assignments along with class details, filtering by teacher's assigned classes
+    # Query to fetch fee details for students
     query = (
         db.session.query(
             User.first_name,
             User.last_name,
             Class.class_name,
-            FeeStructure.total_fee
+            FeeRecord.total_amount,
+            FeeRecord.status_id,
+            PaymentStatus.status_name
         )
-        .join(ClassAssignment, ClassAssignment.student_id == User.id)  # Ensure teacher's assigned class filtering
+        .join(ClassAssignment, ClassAssignment.student_id == User.id)
         .join(Class, Class.class_id == ClassAssignment.class_id)
         .join(StudentFeeAssignment, StudentFeeAssignment.student_id == User.id)
-        .join(FeeStructure, FeeStructure.structure_id == StudentFeeAssignment.structure_id)
+        .join(FeeRecord, FeeRecord.fee_assignment_id == StudentFeeAssignment.fee_assignment_id)
+        .join(PaymentStatus, PaymentStatus.status_id == FeeRecord.status_id)
         .filter(ClassAssignment.class_id.in_(
             db.session.query(ClassAssignment.class_id)
-            .filter(ClassAssignment.teacher_id == current_user.id)  # Filter only classes assigned to the teacher
+            .filter(ClassAssignment.teacher_id == current_user.id)
         ))
     )
 
-    # If a class is selected, further filter by class name
+    # Filter by selected class if provided
     if selected_class:
         query = query.filter(Class.class_name == selected_class)
 
-    # Fetch all students matching the query
-    student_fees = query.all()
+    # Fetch all matching records
+    fee_records = query.all()
 
-    # Format student fee data for the template
-    students = [{
-        "name": f"{student.first_name} {student.last_name}",
-        "class_name": student.class_name,
-        "total_fee": float(student.total_fee) if student.total_fee else 0.0
-    } for student in student_fees]
+    # Compute total collected amount and total fee recorded based on class selection
+    filtered_fee_records = fee_records if not selected_class else [record for record in fee_records if record.class_name == selected_class]
 
-    # Calculate the total fee sum
-    total_fee = sum(student["total_fee"] for student in students)
+    total_collected_fee = sum(record.total_amount for record in filtered_fee_records if record.status_name == 'Paid')
+    total_fee_recorded = sum(record.total_amount for record in filtered_fee_records)
 
-    # Fetch available class names for the dropdown (only classes assigned to the teacher)
+    # Prepare student fee data
+    students = {}
+    for record in filtered_fee_records:
+        student_name = f"{record.first_name} {record.last_name}"
+        if student_name not in students:
+            students[student_name] = {
+                "class_name": record.class_name,
+                "total_fee": 0.0,
+                "collected_fee": 0.0
+            }
+
+        students[student_name]["total_fee"] += float(record.total_amount) if record.total_amount else 0.0
+        if record.status_name == "Paid":
+            students[student_name]["collected_fee"] += float(record.total_amount)
+
+    # Convert dictionary to list
+    student_list = [{"name": name, **data} for name, data in students.items()]
+
+    # Fetch available class names for dropdown
     class_names = (
         db.session.query(Class.class_name)
         .join(ClassAssignment, ClassAssignment.class_id == Class.class_id)
@@ -307,9 +339,17 @@ def generate_total_fee():
     )
     class_names = [class_name[0] for class_name in class_names]
 
-    return render_template('teacher/total_fee.html', 
-                           students=students, 
-                           total_fee=total_fee, 
-                           class_names=class_names, 
-                           selected_class=selected_class, 
-                           app_name=app_name())
+    # Set the title dynamically based on selection
+    fee_summary_title = f"Total Fee for Class {selected_class}" if selected_class else "Total Fee for All Classes"
+
+    return render_template(
+        'teacher/total_fee.html',
+        students=student_list,
+        total_collected_fee=total_collected_fee,
+        total_fee_recorded=total_fee_recorded,
+        class_names=class_names,
+        selected_class=selected_class,
+        fee_summary_title=fee_summary_title,
+        app_name=app_name()
+    )
+

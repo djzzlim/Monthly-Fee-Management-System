@@ -2,7 +2,7 @@ import random
 from flask import Blueprint, flash, jsonify, render_template, request, redirect, url_for, session
 from flask_login import login_required, current_user
 from .routes import role_required, app_name
-from ..models.models import User, ParentStudentRelation, StudentFeeAssignment, FeeRecord, PaymentHistory, Notification  
+from ..models.models import User, ParentStudentRelation, StudentFeeAssignment, FeeRecord, PaymentHistory, Notification, MessageTemplate, ClassAssignment  
 import datetime
 import logging
 import os
@@ -181,7 +181,7 @@ def fee_record():
 def download_invoice(fee_record_id):
     try:
         # Define the invoice directory
-        invoice_dir = os.path.join(os.getcwd(), 'archives', 'invoices')
+        invoice_dir = os.path.join(os.getcwd(), 'app','archives', 'invoices')
 
         # Construct the expected invoice filename
         invoice_filename = f'invoice_{fee_record_id}.pdf'
@@ -224,13 +224,13 @@ def make_payment():
         )
 
         no_payment_due = len(unpaid_fees) == 0
-        total_penalty = 0
         fee_record = unpaid_fees[0] if not no_payment_due else None
         total_penalty = fee_record.late_fee_amount if fee_record else 0
 
         if request.method == 'POST':
             fee_payment_id = request.form.get('fee_payment')
             payment_method = request.form.get('payment_method')
+            message_type = "Payment Confirmation"  # Fixed message type
 
             selected_fee_record = db.session.query(FeeRecord).filter_by(fee_record_id=fee_payment_id).first()
             if not selected_fee_record:
@@ -266,6 +266,56 @@ def make_payment():
             # Generate PDF Receipt
             generate_receipt_pdf(new_payment_id, selected_child, selected_fee_record, payment_method)
 
+            ### Add Notification for the Parent ###
+            template = db.session.query(MessageTemplate).filter_by(message_temp_id='template3').first()
+            template_text = template.template_text if template else "Payment received successfully."
+
+            # Get Teacher ID and Class Name
+            student_class_assignment = db.session.query(ClassAssignment).filter_by(student_id=selected_child.id).first()
+            teacher_id = student_class_assignment.teacher_id if student_class_assignment else None
+            class_name = student_class_assignment.class_.class_name if student_class_assignment and student_class_assignment.class_ else "Unknown Class"
+
+            # Get Fee Type
+            fee_assignment = db.session.query(StudentFeeAssignment).join(FeeRecord).filter(
+                StudentFeeAssignment.student_id == selected_child.id,
+                FeeRecord.fee_record_id == selected_fee_record.fee_record_id
+            ).first()
+            fee_type = fee_assignment.structure.description if fee_assignment else "Unknown Fee Type"
+
+            # Replace placeholders in message text
+            message_text = template_text.format(
+                amount=selected_fee_record.total_amount,
+                child_name=f"{selected_child.first_name} {selected_child.last_name}",
+                timestamp=malaysia_time.strftime('%Y-%m-%d %I:%M %p'),
+                payment_history_id=new_payment_id,
+                class_name=class_name,
+                fee_type=fee_type,
+                amount_paid=selected_fee_record.total_amount,
+                payment_method=payment_method
+            )
+
+            # Generate Notification ID
+            last_notification = db.session.query(Notification).order_by(Notification.notification_id.desc()).first()
+            last_number = int(last_notification.notification_id[5:]) if last_notification else 0  
+            notification_id = f'notif{last_number + 1}'
+
+            while db.session.query(Notification).filter_by(notification_id=notification_id).first():
+                last_number += 1  
+                notification_id = f'notif{last_number + 1}'
+
+            # Insert Notification Record
+            new_notification = Notification(
+                notification_id=notification_id,
+                teacher_id=teacher_id,
+                student_id=selected_child.id,
+                message_type=message_type,
+                message_text=message_text,
+                timestamp=malaysia_time
+            )
+
+            db.session.add(new_notification)
+            db.session.commit()
+
             return redirect(url_for('parent.make_payment', payment_successful=True, payment_history_id=new_payment_id))
 
         return render_template('parent/make_payment.html',
@@ -281,9 +331,10 @@ def make_payment():
         db.session.rollback()
         return render_template('error.html', error_message=str(e))
 
+
 def generate_receipt_pdf(payment_history_id, selected_child, fee_record, payment_method):
     try:
-        receipt_folder = os.path.join(os.getcwd(), 'archives', 'receipts')
+        receipt_folder = os.path.join(os.getcwd(), 'app','archives', 'receipts')
         if not os.path.exists(receipt_folder):
             os.makedirs(receipt_folder)
 
@@ -493,12 +544,28 @@ def notification_dashboard():
         # Format the timestamp into date and time
         timestamp = notification.timestamp
         date = timestamp.strftime('%Y-%m-%d')  # Format as Date
-        time = timestamp.strftime('%H:%M %p')  # Format as Time
+        time = timestamp.strftime('%I:%M %p')  # Format as Time
+
+        # Process message_text for Payment Confirmation
+        if notification.message_type == "Payment Confirmation":
+            # Split the message into lines and remove empty lines
+            message_lines = [line.strip() for line in notification.message_text.strip().split("\n") if line.strip()]
+            
+            # First two lines
+            first_two_lines = "\n".join(message_lines[:2])
+            
+            # Lines after the first two
+            remaining_lines = message_lines[2:]
+        else:
+            # For other message types, keep the entire message
+            first_two_lines = notification.message_text
+            remaining_lines = []
 
         # Append the formatted notification to the list
         formatted_notifications.append({
             "message_type": notification.message_type,
-            "message_text": notification.message_text,
+            "first_two_lines": first_two_lines,
+            "remaining_lines": remaining_lines,
             "date": date,
             "time": time,
             "teacher_name": teacher_name,
@@ -512,8 +579,6 @@ def notification_dashboard():
         selected_child=selected_child, 
         app_name=app_name()
     )
-
-
 
 @parent.route('/ajax_notifications', methods=['GET'])
 @login_required
@@ -542,24 +607,32 @@ def ajax_notifications():
             # Format timestamp
             timestamp = notification.timestamp
             date = timestamp.strftime('%Y-%m-%d')  # Format as Date
-            time = timestamp.strftime('%H:%M %p')  # Format as Time
+            time = timestamp.strftime('%I:%M %p')  # Format as Time
+
+            # Prepare message text, handle "Payment Confirmation" differently
+            message_text = notification.message_text
+            if notification.message_type == "Payment Confirmation":
+                # Split message into lines and take only the first two
+                message_lines = [line.strip() for line in message_text.split("\n") if line.strip()]
+                message_text = "\n".join(message_lines[:2])  # Ensure line breaks work in HTML
 
             # Prepare HTML for the notification
             notifications_html += f"""
-                <li class="list-group-item" style="background-color: #f0f8ff;">
-                    <p style="text-align:center; text-transform: uppercase; font-size: 17px; margin-bottom: 10px;">
+                <li class='list-group-item' style='background-color: #f0f8ff;'>
+                    <p style='text-align:center; text-transform: uppercase; font-size: 17px; margin-bottom: 10px;'>
                         <strong>{notification.message_type}</strong>
                     </p>
-                    <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                    <div style='display: flex; justify-content: space-between; font-size: 13px;'>
                         <span><strong>Date:</strong> {date}</span>
                         <span><strong>Time:</strong> {time}</span>
-                        <span><strong>Sent by: </strong>Teacher {teacher_name}</span>
+                        <span><strong>Sent by:</strong> Teacher {teacher_name}</span>
                     </div>
-                    <p style="margin-top: 10px;">{notification.message_text}</p>
+                    <p style='margin-top: 10px; font-size: 15px;'>{message_text}</p>
                 </li>
             """
     else:
         notifications_html = '<p class="alert alert-warning">No notifications available</p>'
 
     return jsonify({"notifications_html": notifications_html})
+
 

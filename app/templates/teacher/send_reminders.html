@@ -67,10 +67,17 @@
             <div class="alert alert-info d-none mt-3" id="messagePreview">
                 <strong>Preview:</strong> <span id="previewText"></span>
             </div>
-
             <!-- Submit Button -->
             <div class="d-flex justify-content-center"> 
-                <button type="submit" class="btn btn-primary mt-4" id="submitBtn">Send Reminder</button>
+                <button type="submit" class="btn btn-primary mt-4" id="submitBtn">
+                    <i class="bi bi-send"></i>  Send Reminder
+                </button>
+            </div>
+            <!-- Back to Dashboard Button -->
+            <div class="text-left mt-4">
+                <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left-circle"></i> Back to Dashboard
+                </a>
             </div>
         </form>
     </div>

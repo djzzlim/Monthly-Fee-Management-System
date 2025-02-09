@@ -1,10 +1,12 @@
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
 from app import db
 from app.models.models import Settings
 from . import admin
 from app.routes.routes import role_required, app_name
 from app.models.models import User, Role, Settings, Class, ClassAssignment, ParentStudentRelation, FeeStructure
+from app.utilities.utils import allowed_file, compress_image, convert_to_favicon
+import os
 
 
 @admin.route('/system-settings', methods=['GET', 'POST'])
