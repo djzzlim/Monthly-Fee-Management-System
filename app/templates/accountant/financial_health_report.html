@@ -86,7 +86,7 @@ endblock %} {% block card_header %}bg-info{% endblock %} {% block card_title
         <tr>
           <td>{{ statistics.total_collected }}</td>
           <td>{{ statistics.late_fees_collected }}</td>
-          <td>{{ statistics.total_discounts }}</td>
+          <td>- {{ statistics.total_discounts }}</td>
           <td>{{ statistics.net_revenue }}</td>
         </tr>
       </tbody>

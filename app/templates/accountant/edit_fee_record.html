@@ -37,13 +37,13 @@
       <!-- Penalty -->
       <div class="mb-3">
         <label for="penalty" class="form-label">Penalty (RM)</label>
-        <input type="number" class="form-control" id="penalty" name="penalty" value="{{ fee_record.late_fee_amount }}" min="0"/>
+        <input type="number" class="form-control" id="penalty" name="penalty" value="{{ fee_record.late_fee_amount }}" min="0" step="{{ late_fee_increment }}"/>
       </div>
 
       <!-- Discount -->
       <div class="mb-3">
         <label for="discount" class="form-label">Discount (RM)</label>
-        <input type="number" class="form-control" id="discount" name="discount" value="{{ fee_record.discount_amount }}" min="0"/>
+        <input type="number" class="form-control" id="discount" name="discount" value="{{ fee_record.discount_amount }}" min="0" step="{{ discount_increment }}"/>
       </div>
 
       <!-- Due Date -->
@@ -65,6 +65,7 @@
           <p><strong>Penalty:</strong> RM <span id="penaltyAmount">0.00</span></p>
           <p><strong>Total Amount Due:</strong> RM <span id="totalAmount">0.00</span></p>
           <p><strong>Due Date:</strong> <span id="summaryDueDate">-</span></p>
+          <p><strong>Due Duration:</strong> <span id="dueDuration">-</span></p>
         </div>
       </div>
 
@@ -78,37 +79,78 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
     const feeAssignment = document.getElementById("feeAssignment");
     const amountDue = document.getElementById("amount_due");
     const penalty = document.getElementById("penalty");
     const discount = document.getElementById("discount");
     const dueDate = document.getElementById("dueDate");
 
-    function updateSummary() {
-      const selectedAssignment = feeAssignment.options[feeAssignment.selectedIndex];
-      const tuitionFee = selectedAssignment ? parseFloat(selectedAssignment.dataset.fee) || 0 : 0;
-      const studentName = selectedAssignment ? selectedAssignment.dataset.student || '-' : '-';
-      const feeDescription = selectedAssignment ? selectedAssignment.dataset.description || '-' : '-';
-      const penaltyAmount = parseFloat(penalty.value) || 0;
-      const discountAmount = parseFloat(discount.value) || 0;
-      const totalAmount = Math.max(tuitionFee + penaltyAmount - discountAmount, 0);
+    function calculateDueDuration(dueDateStr) {
+        if (!dueDateStr) return "-";
 
-      document.getElementById("summaryStudent").textContent = studentName;
-      document.getElementById("summaryDescription").textContent = feeDescription;
-      document.getElementById("tuitionFee").textContent = tuitionFee.toFixed(2);
-      document.getElementById("discountAmount").textContent = discountAmount.toFixed(2);
-      document.getElementById("penaltyAmount").textContent = penaltyAmount.toFixed(2);
-      document.getElementById("totalAmount").textContent = totalAmount.toFixed(2);
-      document.getElementById("summaryDueDate").textContent = dueDate.value || "-";
+        const dueDate = new Date(dueDateStr);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Remove time part to avoid issues
+        dueDate.setHours(0, 0, 0, 0);
+
+        let months, days;
+
+        if (today >= dueDate) {
+            // Overdue calculation
+            months = (today.getFullYear() - dueDate.getFullYear()) * 12 + (today.getMonth() - dueDate.getMonth());
+            days = today.getDate() - dueDate.getDate();
+
+            if (days < 0) {
+                months -= 1;
+                const lastMonthDays = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+                days += lastMonthDays;
+            }
+
+            return `${months} months, ${days} days`;
+        } else {
+            // Remaining time calculation
+            months = (dueDate.getFullYear() - today.getFullYear()) * 12 + (dueDate.getMonth() - today.getMonth());
+            days = dueDate.getDate() - today.getDate();
+
+            if (days < 0) {
+                months -= 1;
+                const lastMonthDays = new Date(dueDate.getFullYear(), dueDate.getMonth(), 0).getDate();
+                days += lastMonthDays;
+            }
+
+            return `${months} months, ${days} days remaining`;
+        }
+    }
+
+    function updateSummary() {
+        const selectedAssignment = feeAssignment.options[feeAssignment.selectedIndex];
+        const tuitionFee = selectedAssignment ? parseFloat(selectedAssignment.dataset.fee) || 0 : 0;
+        const studentName = selectedAssignment ? selectedAssignment.dataset.student || '-' : '-';
+        const feeDescription = selectedAssignment ? selectedAssignment.dataset.description || '-' : '-';
+        const penaltyAmount = parseFloat(penalty.value) || 0;
+        const discountAmount = parseFloat(discount.value) || 0;
+        const totalAmount = Math.max(tuitionFee + penaltyAmount - discountAmount, 0);
+        const dueDuration = calculateDueDuration(dueDate.value);
+
+        document.getElementById("summaryStudent").textContent = studentName;
+        document.getElementById("summaryDescription").textContent = feeDescription;
+        document.getElementById("tuitionFee").textContent = tuitionFee.toFixed(2);
+        document.getElementById("discountAmount").textContent = discountAmount.toFixed(2);
+        document.getElementById("penaltyAmount").textContent = penaltyAmount.toFixed(2);
+        document.getElementById("totalAmount").textContent = totalAmount.toFixed(2);
+        document.getElementById("summaryDueDate").textContent = dueDate.value || "-";
+        document.getElementById("dueDuration").textContent = dueDuration;
     }
 
     [feeAssignment, amountDue, penalty, discount, dueDate].forEach((input) => {
-      input.addEventListener("input", updateSummary);
+        input.addEventListener("input", updateSummary);
     });
 
     updateSummary();  // Update summary on page load
-  });
+});
+
+
 </script>
 
 {% endblock %}

@@ -1,6 +1,18 @@
-{% extends "share/dashboard.html" %} {% block title %}Financial Reports{%
-endblock %} {% block card_header %}bg-info{% endblock %} {% block card_title
-%}Financial Reports{% endblock %} {% block card_content %}
+{% extends "share/dashboard.html" %}
+
+{% block title %}Financial Reports{% endblock %}
+{% block card_header %}bg-info{% endblock %}
+{% block card_title %}Financial Reports{% endblock %}
+{% block card_content %}
+
+<!-- Brief Description -->
+<p>
+  Manage and view all generated financial reports, including fee collection,
+  financial health, and overdue payment reports.
+</p>
+
+<!-- Total Report Count -->
+<p id="totalReportCount" class="fw-bold">Total Reports: {{ reports|length }}</p>
 
 <!-- Generate New Report Button -->
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -22,24 +34,23 @@ endblock %} {% block card_header %}bg-info{% endblock %} {% block card_title
 
 <!-- Table to Display Reports -->
 <div class="table-responsive">
-  <table class="table table-bordered">
-    <thead>
+  <table class="table table-bordered" id="reportTable">
+    <thead class="table-dark">
       <tr>
-        <th>Report Name</th>
-        <th>Report Type</th>
-        <th>Generation Date</th>
+        <th onclick="sortTable(0)">Report Name</th>
+        <th onclick="sortTable(1)">Report Type</th>
+        <th onclick="sortTable(2)">Generation Date</th>
         <th>Action</th>
       </tr>
     </thead>
     <tbody id="reportTableBody">
       {% for report in reports %}
-      <tr data-type="{{ report.report_type }}">
+      <tr data-type="{{ report.report_type }}" class="report-row">
         <td>{{ report.report_id }}</td>
         <td class="text-capitalize">
           {{ report.report_type.replace('_', ' ') }}
         </td>
         <td>{{ report.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-        <!-- Added timestamp format here -->
         <td>
           <a
             href="{{ url_for('accountant.view_report', report_id=report.report_id) }}"
@@ -68,37 +79,115 @@ endblock %} {% block card_header %}bg-info{% endblock %} {% block card_title
 <p class="text-center text-muted">No reports available.</p>
 {% endif %}
 
+<!-- Back Button -->
+<div class="text-center mt-4">
+  <a href="{{ url_for('accountant.dashboard') }}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left-circle"></i> Back to Dashboard
+  </a>
+</div>
+
 <!-- JavaScript for Filtering Reports & Confirmation -->
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const reportTypeDropdown = document.getElementById("reportType");
-    const reportTableBody = document.getElementById("reportTableBody").children;
+document.addEventListener("DOMContentLoaded", function () {
+  const reportTypeDropdown = document.getElementById("reportType");
+  const reportRows = Array.from(document.querySelectorAll(".report-row"));
+  const totalReportCount = document.getElementById("totalReportCount");
 
-    // Filter reports based on selected type
-    reportTypeDropdown.addEventListener("change", function () {
-      const selectedType = this.value;
+  // Filter reports based on selected type
+  reportTypeDropdown.addEventListener("change", function () {
+    const selectedType = this.value;
 
-      Array.from(reportTableBody).forEach((row) => {
-        const reportType = row.getAttribute("data-type");
-
-        if (selectedType === "all" || reportType === selectedType) {
-          row.style.display = "";
-        } else {
-          row.style.display = "none";
-        }
-      });
+    // Show only the rows that match the selected type
+    reportRows.forEach((row) => {
+      const reportType = row.getAttribute("data-type");
+      if (selectedType === "all" || reportType === selectedType) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
     });
 
-    // Delete Confirmation
-    document.querySelectorAll(".delete-btn").forEach((button) => {
-      button.addEventListener("click", function (event) {
-        event.preventDefault();
-        if (confirm("Are you sure you want to delete this report?")) {
-          this.closest("form").submit();
-        }
-      });
+    updateReportCount(); // Update the report count after filtering
+  });
+
+  // Delete Confirmation
+  document.querySelectorAll(".delete-btn").forEach((button) => {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      if (confirm("Are you sure you want to delete this report?")) {
+        this.closest("form").submit();
+      }
     });
   });
+});
+
+// Update total report count
+function updateReportCount() {
+  const selectedType = document.getElementById("reportType").value;
+  const visibleRows = getVisibleRows(selectedType).length;
+  document.getElementById(
+    "totalReportCount"
+  ).textContent = `Total Reports: ${visibleRows}`;
+}
+
+// Get visible rows for the selected report type
+function getVisibleRows(selectedType) {
+  return Array.from(document.querySelectorAll(".report-row")).filter((row) => {
+    return (
+      row.style.display !== "none" &&
+      (selectedType === "all" || row.getAttribute("data-type") === selectedType)
+    );
+  });
+}
+
+// Sort table function
+function sortTable(n) {
+  const table = document.getElementById("reportTable");
+  let rows,
+    switching,
+    i,
+    x,
+    y,
+    shouldSwitch,
+    dir,
+    switchcount = 0;
+  switching = true;
+  dir = "asc"; // Set the sorting direction to ascending
+
+  while (switching) {
+    switching = false;
+    rows = table.rows;
+
+    for (i = 1; i < rows.length - 1; i++) {
+      shouldSwitch = false;
+      x = rows[i].getElementsByTagName("TD")[n];
+      y = rows[i + 1].getElementsByTagName("TD")[n];
+
+      if (dir == "asc") {
+        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+          shouldSwitch = true;
+          break;
+        }
+      } else if (dir == "desc") {
+        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+          shouldSwitch = true;
+          break;
+        }
+      }
+    }
+
+    if (shouldSwitch) {
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+      switchcount++;
+    } else {
+      if (switchcount == 0 && dir == "asc") {
+        dir = "desc";
+        switching = true;
+      }
+    }
+  }
+}
 </script>
 
 {% endblock %}

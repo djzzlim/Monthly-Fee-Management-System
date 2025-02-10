@@ -58,7 +58,7 @@
           type="submit"
           name="action"
           value="generate"
-          class="btn btn-danger"
+          class="btn btn-success"
         >
           Generate Report
         </button>
@@ -79,9 +79,9 @@
         <tr>
           <th>Student ID</th>
           <th>Full Name</th>
-          <th>Total Fee (RM)</th>
-          <th>Amount Due (RM)</th>
+          <th>Invoice Amount (RM)</th>
           <th>Late Fee (RM)</th>
+          <th>Total Amount (RM)</th>
           <th>Due Date</th>
           <th>Status</th>
         </tr>
@@ -94,9 +94,9 @@
             {{ record.assignment.student.first_name + " " + 
             record.assignment.student.last_name }}
           </td>
-          <td>{{ record.assignment.structure.total_fee }}</td>
-          <td>{{ record.amount_due }}</td>
+          <td>{{ record.amount_due - record.discount_amount }}</td>
           <td>{{ record.late_fee_amount }}</td>
+          <td>{{ record.total_amount }}</td>
           <td>{{ record.due_date }}</td>
           <td class="text-danger"><strong>Overdue</strong></td>
         </tr>

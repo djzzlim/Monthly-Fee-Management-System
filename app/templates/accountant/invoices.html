@@ -2,44 +2,87 @@
 block card_header %}bg-info{% endblock %} {% block card_title %}Generated
 Invoices{% endblock %} {% block card_content %}
 
+<!-- Brief Description -->
+<p>
+  View and manage the generated invoices within the selected date range. You can
+  also create new invoices or remove existing ones.
+</p>
+
 <!-- Top Section: Date Range Filter & Create Button -->
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <form method="POST" class="d-flex gap-2">
-    <label class="fw-bold" for="start_date">Start Date:</label>
+  <div>
+    <form method="POST" class="d-flex gap-2">
+      <label class="me-2 fw-bold" for="start_date">Start Date:</label>
+      <input
+        type="date"
+        id="start_date"
+        name="start_date"
+        class="form-control w-auto"
+        value="{{ start_date }}"
+        required
+      />
+
+      <label class="me-2 fw-bold" for="end_date">End Date:</label>
+      <input
+        type="date"
+        id="end_date"
+        name="end_date"
+        class="form-control w-auto"
+        value="{{ end_date }}"
+        required
+      />
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+  </div>
+</div>
+
+<!-- Search and Status Dropdown -->
+<div class="d-flex align-items-center mb-3">
+  <div>
+    <select
+      id="statusFilter"
+      class="form-select w-auto me-3"
+      onchange="filterStatus()"
+    >
+      <option value="">All Status</option>
+      <option value="Paid">Paid</option>
+      <option value="Pending">Pending</option>
+      <option value="Overdue">Overdue</option>
+    </select>
+  </div>
+
+  <div>
     <input
-      type="date"
-      id="start_date"
-      name="start_date"
+      type="text"
+      id="searchFeeRecord"
       class="form-control w-auto"
-      value="{{ start_date }}"
-      required
+      placeholder="Search by Fee Record ID"
+      onkeyup="searchTable()"
     />
+  </div>
 
-    <label class="fw-bold" for="end_date">End Date:</label>
-    <input
-      type="date"
-      id="end_date"
-      name="end_date"
-      class="form-control w-auto"
-      value="{{ end_date }}"
-      required
-    />
-
-    <button type="submit" class="btn btn-primary">Filter</button>
-  </form>
-
-  <a href="{{ url_for('accountant.create_invoice') }}" class="btn btn-success">
-    <i class="fas fa-plus"></i> Create New Invoice
-  </a>
+  <!-- Create New Invoice Button (moved to far right) -->
+  <div class="ms-auto">
+    <a
+      href="{{ url_for('accountant.create_invoice') }}"
+      class="btn btn-success"
+    >
+      <i class="fas fa-plus"></i> Create New Invoice
+    </a>
+  </div>
 </div>
 
 <!-- Table of Invoices -->
 <div class="table-responsive">
-  <table class="table table-bordered">
-    <thead>
+  <table id="invoiceTable" class="table table-bordered">
+    <thead class="table-dark">
       <tr>
-        <th>Invoice Name</th>
-        <th>Generation Date</th>
+        <th onclick="sortTable(0)">Invoice Name</th>
+        <th onclick="sortTable(1)">Generation Date</th>
+        <th onclick="sortTable(2)">Fee Record ID</th>
+        <th onclick="sortTable(3)">Amount Due (RM)</th>
+        <th onclick="sortTable(4)">Due Date</th>
+        <th onclick="sortTable(5)">Status</th>
         <th>Action</th>
       </tr>
     </thead>
@@ -48,6 +91,15 @@ Invoices{% endblock %} {% block card_content %}
       <tr>
         <td>{{ invoice.invoice_id }}</td>
         <td>{{ invoice.date.strftime('%Y-%m-%d') }}</td>
+        <td>{{ invoice.fee_record.fee_record_id }}</td>
+        <td>{{ invoice.fee_record.total_amount }}</td>
+        <td>{{ invoice.fee_record.due_date.strftime('%Y-%m-%d') }}</td>
+        <td>
+          {% if invoice.fee_record.status %} {{
+          invoice.fee_record.status.status_name }} {% else %}
+          <!-- If status is not set, leave blank -->
+          &nbsp; {% endif %}
+        </td>
         <td>
           <a
             href="{{ url_for('accountant.view_invoice', invoice_id=invoice.invoice_id) }}"
@@ -78,6 +130,13 @@ Invoices{% endblock %} {% block card_content %}
 </p>
 {% endif %}
 
+<!-- Back Button -->
+<div class="text-center mt-4">
+  <a href="{{ url_for('accountant.dashboard') }}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left-circle"></i> Back to Dashboard
+  </a>
+</div>
+
 <!-- Delete Confirmation -->
 <script>
   document.querySelectorAll(".delete-btn").forEach((button) => {
@@ -88,6 +147,81 @@ Invoices{% endblock %} {% block card_content %}
       }
     });
   });
+
+  // Sort Table Function
+  function sortTable(n) {
+    var table = document.getElementById("invoiceTable");
+    var rows = table.rows;
+    var switching = true;
+    var dir = "asc";
+    while (switching) {
+      switching = false;
+      var shouldSwitch = false;
+      for (var i = 1; i < rows.length - 1; i++) {
+        var x = rows[i].getElementsByTagName("TD")[n];
+        var y = rows[i + 1].getElementsByTagName("TD")[n];
+        if (
+          (dir == "asc" &&
+            x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) ||
+          (dir == "desc" &&
+            x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase())
+        ) {
+          shouldSwitch = true;
+          break;
+        }
+      }
+      if (shouldSwitch) {
+        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+        switching = true;
+      } else {
+        if (dir == "asc") {
+          dir = "desc";
+        } else {
+          break;
+        }
+      }
+    }
+  }
+
+  // Search Function for Fee Record ID
+  function searchTable() {
+    var input, filter, table, tr, td, i, txtValue;
+    input = document.getElementById("searchFeeRecord");
+    filter = input.value.toUpperCase();
+    table = document.getElementById("invoiceTable");
+    tr = table.getElementsByTagName("tr");
+    for (i = 1; i < tr.length; i++) {
+      td = tr[i].getElementsByTagName("td")[2]; // Column 2 is Fee Record ID
+      if (td) {
+        txtValue = td.textContent || td.innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+          tr[i].style.display = "";
+        } else {
+          tr[i].style.display = "none";
+        }
+      }
+    }
+  }
+
+  // Filter by Status
+  function filterStatus() {
+    var filter, table, tr, td, i;
+    filter = document.getElementById("statusFilter").value.toUpperCase(); // Convert to upper case for comparison
+    table = document.getElementById("invoiceTable");
+    tr = table.getElementsByTagName("tr");
+
+    for (i = 1; i < tr.length; i++) {
+      td = tr[i].getElementsByTagName("td")[5]; // Column 5 is Status
+      if (td) {
+        var status = td.textContent || td.innerText; // Get status text
+        if (filter === "" || status.toUpperCase().indexOf(filter) > -1) {
+          tr[i].style.display = ""; // Show row if filter matches
+        } else {
+          tr[i].style.display = "none"; // Hide row if filter does not match
+        }
+      }
+    }
+  }
 </script>
 
 {% endblock %}

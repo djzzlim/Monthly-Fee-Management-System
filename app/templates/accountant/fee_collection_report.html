@@ -76,10 +76,13 @@ endblock %} {% block card_header %}bg-info{% endblock %} {% block card_title
         <tr>
           <th>Student ID</th>
           <th>Full Name</th>
-          <th>Amount Collected (RM)</th>
+          <th>Tuition Fee (RM)</th>
           <th>Penalty (RM)</th>
           <th>Discount (RM)</th>
+          <th>Total Amount Collected (RM)</th>
           <th>Due Date</th>
+          <th>Payment Date</th>
+          <!-- New column for Payment Date -->
           <th>Status</th>
         </tr>
       </thead>
@@ -91,13 +94,18 @@ endblock %} {% block card_header %}bg-info{% endblock %} {% block card_title
             {{ record.assignment.student.first_name + " " +
             record.assignment.student.last_name }}
           </td>
-          <!-- Assuming full_name is available -->
-          <td>{{ record.total_amount }}</td>
+          <td>{{ record.amount_due }}</td>
           <td>{{ record.late_fee_amount }}</td>
-          <td>{{ record.discount_amount }}</td>
+          <td>- {{ record.discount_amount }}</td>
+          <td>{{ record.total_amount }}</td>
           <td>{{ record.due_date }}</td>
+          <td>
+            {% if record.payment_histories %} {{
+            record.payment_histories[0].payment_date.strftime('%Y-%m-%d') }}
+            <!-- First payment date -->
+            {% else %} No payment {% endif %}
+          </td>
           <td>{{ record.status.status_name }}</td>
-          <!-- Assuming status_name is available -->
         </tr>
         {% endfor %}
       </tbody>

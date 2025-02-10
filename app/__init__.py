@@ -21,10 +21,10 @@ def create_app():
 
     from .routes.routes import routes
     from .routes.auth import auth
-    from .routes.accountant_routes import accountant
+    from .routes.accountant import accountant
     from .routes.admin import admin
-    from .routes.teacher_routes import teacher
-    from .routes.parent_routes import parent
+    from .routes.parent import parent
+    from .routes.teacher import teacher
 
     app.register_blueprint(routes, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
