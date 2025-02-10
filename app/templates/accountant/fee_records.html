@@ -1,6 +1,8 @@
-{% extends "share/dashboard.html" %} {% block title %}Fee Records{% endblock %}
-{% block card_header %}bg-info{% endblock %} {% block card_title %}Fee Records{%
-endblock %} {% block card_content %}
+{% extends "share/dashboard.html" %}
+{% block title %}Fee Records{% endblock %}
+{% block card_header %}bg-info{% endblock %}
+{% block card_title %}Fee Records{% endblock %}
+{% block card_content %}
 
 <p>
   Here are the fee records. Payment status is shown based on the amount paid.
@@ -32,16 +34,16 @@ endblock %} {% block card_content %}
   <table class="table table-bordered" id="feeRecordsTable">
     <thead class="table-dark">
       <tr>
-        <th onclick="sortTable(0)">Record ID</th>
-        <th onclick="sortTable(1)">Student ID</th>
-        <th onclick="sortTable(2)">Student Name</th>
+        <th onclick="sortTable(0)">Record ID <i class="fas fa-sort"></i></th>
+        <th onclick="sortTable(1)">Student ID <i class="fas fa-sort"></i></th>
+        <th onclick="sortTable(2)">Student Name <i class="fas fa-sort"></i></th>
         <th>Fee Description</th>
-        <th onclick="sortTable(3)">Tuition Fee (RM)</th>
-        <th onclick="sortTable(4)">Penalty (RM)</th>
-        <th onclick="sortTable(5)">Discount (RM)</th>
-        <th onclick="sortTable(6)">Total Amount (RM)</th>
-        <th onclick="sortTable(7)">Due Date</th>
-        <th>Status</th>
+        <th onclick="sortTable(4)">Tuition Fee (RM) <i class="fas fa-sort"></i></th>
+        <th onclick="sortTable(5)">Penalty (RM) <i class="fas fa-sort"></i></th>
+        <th onclick="sortTable(6)">Discount (RM) <i class="fas fa-sort"></i></th>
+        <th onclick="sortTable(7)">Total Amount (RM) <i class="fas fa-sort"></i></th>
+        <th onclick="sortTable(8)">Due Date <i class="fas fa-sort"></i></th>
+        <th onclick="sortTable(9)">Status</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -60,11 +62,13 @@ endblock %} {% block card_content %}
         <td>
           {% if status.status_id == 'status001' %}
           <span class="badge bg-warning">Unpaid</span>
-          {% elif status.status_id == 'status002' %}
-          <span class="badge bg-success">Paid</span>
-          {% else %}
-          <span class="badge bg-danger">Overdue</span>
-          {% endif %}
+        {% elif status.status_id == 'status002' %}
+          <span class="badge bg-success">{{ status.status_name }}</span>
+        {% elif status.status_id == 'status003' %}
+          <span class="badge bg-danger">{{ status.status_name }}</span>
+        {% else %}
+          <span class="badge bg-secondary">{{ status.status_name }}</span>
+        {% endif %}
         </td>
         <td>
           <div class="d-flex gap-2">
@@ -105,6 +109,8 @@ endblock %} {% block card_content %}
 </div>
 
 <script>
+  let sortDirection = [true, true, true, true, true, true, true, true]; // Array to track sorting direction for each column
+
   // Search function to filter table rows based on student ID
   function searchTable() {
     const input = document.getElementById("searchInput");
@@ -124,7 +130,7 @@ endblock %} {% block card_content %}
     }
   }
 
-  // Sorting function for tables
+  // Sorting function for tables with dynamic indicators
   function sortTable(n) {
     const table = document.getElementById("feeRecordsTable");
     let rows,
@@ -136,8 +142,29 @@ endblock %} {% block card_content %}
       dir,
       switchcount = 0;
     switching = true;
-    dir = "asc"; // Set the sorting direction to ascending
+    dir = sortDirection[n] ? "asc" : "desc"; // Toggle sorting direction
+    sortDirection[n] = !sortDirection[n]; // Update direction for the next click
 
+    // Reset arrows
+    const headers = table.getElementsByTagName("th");
+    for (let i = 0; i < headers.length; i++) {
+      headers[i].classList.remove("sorted-asc", "sorted-desc");
+      const arrow = headers[i].getElementsByTagName("i")[0];
+      if (arrow) {
+        arrow.classList.remove("fa-sort-up", "fa-sort-down");
+        arrow.classList.add("fa-sort");
+      }
+    }
+
+    // Add sorting indicator
+    const arrow = headers[n].getElementsByTagName("i")[0];
+    if (arrow) {
+      arrow.classList.remove("fa-sort");
+      arrow.classList.add(dir === "asc" ? "fa-sort-up" : "fa-sort-down");
+      headers[n].classList.add(dir === "asc" ? "sorted-asc" : "sorted-desc");
+    }
+
+    // Sorting logic
     while (switching) {
       switching = false;
       rows = table.rows;
@@ -147,13 +174,23 @@ endblock %} {% block card_content %}
         x = rows[i].getElementsByTagName("TD")[n];
         y = rows[i + 1].getElementsByTagName("TD")[n];
 
-        if (dir == "asc") {
-          if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+        // Compare numeric values if necessary
+        let xText = x.innerText || x.textContent;
+        let yText = y.innerText || y.textContent;
+
+        // If sorting by currency fields, convert to numbers for accurate sorting
+        if (n === 3 || n === 4 || n === 5 || n === 6 || n === 7) {
+          xText = parseFloat(xText.replace('RM', '').trim());
+          yText = parseFloat(yText.replace('RM', '').trim());
+        }
+
+        if (dir === "asc") {
+          if (xText > yText) {
             shouldSwitch = true;
             break;
           }
-        } else if (dir == "desc") {
-          if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+        } else if (dir === "desc") {
+          if (xText < yText) {
             shouldSwitch = true;
             break;
           }
@@ -165,7 +202,7 @@ endblock %} {% block card_content %}
         switching = true;
         switchcount++;
       } else {
-        if (switchcount == 0 && dir == "asc") {
+        if (switchcount === 0 && dir === "asc") {
           dir = "desc";
           switching = true;
         }

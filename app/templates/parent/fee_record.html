@@ -63,12 +63,18 @@
             {% endif %}
           </td>
           <td>
-            <a href="{{ url_for('parent.download_invoice', fee_record_id=record.fee_record_id) }}" 
-               class="btn btn-outline-primary btn-sm" 
-               target="_blank">
-               <i class="bi bi-printer-fill"></i> Print
-            </a>
-          </td>
+            {% if record.invoice_exists %}  {# Check if invoice exists #}
+                <a href="{{ url_for('parent.download_invoice', fee_record_id=record.fee_record_id) }}" 
+                   class="btn btn-outline-primary btn-sm" 
+                   target="_blank">
+                   <i class="bi bi-printer-fill"></i> Print
+                </a>
+            {% else %}
+                <span class="badge bg-warning text-dark">
+                    <i class="bi bi-hourglass-split"></i> Pending
+                </span>
+            {% endif %}
+        </td>
         </tr>
         {% endfor %}
       </tbody>

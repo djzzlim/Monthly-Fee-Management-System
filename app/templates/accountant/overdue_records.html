@@ -7,6 +7,16 @@ endblock %} {% block card_header %}bg-danger{% endblock %} {% block card_title
   follow-ups.
 </p>
 
+<div class="mb-3">
+  <input
+    type="text"
+    id="searchFeeRecord"
+    class="form-control w-auto"
+    placeholder="Search by Fee Record ID"
+    onkeyup="searchTable()"
+  />
+</div>
+
 <div class="table-responsive">
   <table class="table table-bordered">
     <thead class="table-dark">
@@ -119,6 +129,27 @@ endblock %} {% block card_header %}bg-danger{% endblock %} {% block card_title
       }
     }
   }
+
+  function searchTable() {
+    var input, filter, table, tr, td, i, txtValue;
+    input = document.getElementById("searchFeeRecord");
+    filter = input.value.toUpperCase();
+    table = document.querySelector(".table"); // Use correct table
+    tr = table.getElementsByTagName("tr");
+
+    for (i = 1; i < tr.length; i++) {
+        td = tr[i].getElementsByTagName("td")[0]; // Column 0 is Fee Record ID
+        if (td) {
+            txtValue = td.textContent || td.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
+    }
+  }
+
 </script>
 
 {% endblock %}

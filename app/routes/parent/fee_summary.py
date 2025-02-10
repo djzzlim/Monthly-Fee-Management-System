@@ -38,7 +38,7 @@ def fee_summary():
         total_pending_fees = sum(record.total_amount for record in fee_records if record.status_id == "status001")
         total_overdue_fees = sum(record.total_amount for record in fee_records if record.status_id == "status003")
         total_penalty = sum(record.late_fee_amount or 0 for record in fee_records if record.status_id == "status003")
-        total_amount_with_penalty = total_pending_fees + total_overdue_fees + total_penalty
+        total_amount = total_pending_fees + total_overdue_fees
 
         # Ensure current_date is passed to the template
         current_date = datetime.datetime.now().date()
@@ -50,7 +50,7 @@ def fee_summary():
             total_pending_fees=total_pending_fees,
             total_overdue_fees=total_overdue_fees,
             total_penalty=total_penalty,
-            total_amount_with_penalty=total_amount_with_penalty,
+            total_amount=total_amount,
             current_date=current_date,
             app_name=app_name()
         )

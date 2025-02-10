@@ -95,10 +95,16 @@ Invoices{% endblock %} {% block card_content %}
         <td>{{ invoice.fee_record.total_amount }}</td>
         <td>{{ invoice.fee_record.due_date.strftime('%Y-%m-%d') }}</td>
         <td>
-          {% if invoice.fee_record.status %} {{
-          invoice.fee_record.status.status_name }} {% else %}
-          <!-- If status is not set, leave blank -->
-          &nbsp; {% endif %}
+        {% if invoice.fee_record.status.status_id == 'status001' %}
+          <span class="badge bg-warning">{{ invoice.fee_record.status.status_name }}</span>
+        {% elif invoice.fee_record.status.status_id == 'status002' %}
+          <span class="badge bg-success">{{ invoice.fee_record.status.status_name }}</span>
+        {% elif invoice.fee_record.status.status_id == 'status003' %}
+          <span class="badge bg-danger">{{ invoice.fee_record.status.status_name }}</span>
+        {% else %}
+          <!-- Default if no matching status_id is found -->
+          <span class="badge bg-secondary">{{ invoice.fee_record.status.status_name }}</span>
+        {% endif %}
         </td>
         <td>
           <a
@@ -149,40 +155,47 @@ Invoices{% endblock %} {% block card_content %}
   });
 
   // Sort Table Function
-  function sortTable(n) {
-    var table = document.getElementById("invoiceTable");
-    var rows = table.rows;
-    var switching = true;
-    var dir = "asc";
-    while (switching) {
-      switching = false;
-      var shouldSwitch = false;
-      for (var i = 1; i < rows.length - 1; i++) {
-        var x = rows[i].getElementsByTagName("TD")[n];
-        var y = rows[i + 1].getElementsByTagName("TD")[n];
-        if (
-          (dir == "asc" &&
-            x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) ||
-          (dir == "desc" &&
-            x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase())
-        ) {
-          shouldSwitch = true;
-          break;
-        }
-      }
-      if (shouldSwitch) {
-        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-        switching = true;
-      } else {
-        if (dir == "asc") {
-          dir = "desc";
-        } else {
-          break;
-        }
-      }
-    }
-  }
+  let sortDirections = []; // Stores sorting directions for each column
 
+  function sortTable(n) {
+      var table = document.getElementById("invoiceTable");
+      var tbody = table.querySelector("tbody"); // Get tbody
+      var rows = Array.from(tbody.rows); // Get all rows within tbody
+
+      // Initialize sorting direction for the column if not set
+      if (sortDirections[n] === undefined) {
+          sortDirections[n] = true; // Default to ascending
+      } else {
+          sortDirections[n] = !sortDirections[n]; // Toggle direction
+      }
+
+      let dir = sortDirections[n] ? "asc" : "desc"; // Determine sorting order
+
+      rows.sort((rowA, rowB) => {
+          let x = rowA.cells[n].innerText.toLowerCase();
+          let y = rowB.cells[n].innerText.toLowerCase();
+
+          // Try converting to numbers for numerical sorting
+          let xNum = parseFloat(x.replace(/[^\d.-]/g, ""));
+          let yNum = parseFloat(y.replace(/[^\d.-]/g, ""));
+
+          if (!isNaN(xNum) && !isNaN(yNum)) {
+              x = xNum;
+              y = yNum;
+          }
+
+          if (dir === "asc") {
+              return x > y ? 1 : -1;
+          } else {
+              return x < y ? 1 : -1;
+          }
+      });
+
+      // Clear and re-append sorted rows inside tbody
+      tbody.innerHTML = "";
+      rows.forEach(row => tbody.appendChild(row));
+  }
+  
   // Search Function for Fee Record ID
   function searchTable() {
     var input, filter, table, tr, td, i, txtValue;

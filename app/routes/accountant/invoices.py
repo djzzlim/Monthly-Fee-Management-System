@@ -2,7 +2,7 @@ from flask import render_template, request, redirect, url_for, send_file
 from datetime import datetime
 from flask_login import login_required
 from app.routes.routes import role_required, app_name
-from app.models.models import FeeRecord
+from app.models.models import FeeRecord, Settings
 from datetime import datetime
 from weasyprint import HTML
 from . import accountant
