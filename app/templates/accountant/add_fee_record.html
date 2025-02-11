@@ -1,5 +1,8 @@
 {% extends "share/dashboard.html" %} {% block title %}Fee Record{% endblock %}
-{% block card_header %}bg-info{% endblock %} {% block card_title %}Fee Record{%
+{% block card_header %}bg-info{% endblock %} {% block card_title %}<i
+class="bi bi-cash-coin"
+></i>
+Fee Record{%
 endblock %} {% block card_content %}
 
 <p>Fill in the details below to add a new fee record.</p>
@@ -10,56 +13,102 @@ endblock %} {% block card_content %}
   </div>
   <div class="card-body">
     <form action="{{ url_for('accountant.add_fee_records') }}" method="POST">
-      <!-- Fee Assignment Selection -->
+      <!-- Student Selection -->
       <div class="mb-3">
-        <label for="feeAssignment" class="form-label">Fee Assignment</label>
-        <select
-          class="form-select"
-          id="feeAssignment"
-          name="fee_assignment_id"
-          required
-        >
-          <option value="" disabled selected>Select Fee Assignment</option>
-          {% for assignment, student, fee in fee_assignments %}
-          <option
-            value="{{ assignment.fee_assignment_id }}"
-            data-fee="{{ fee.total_fee }}"
-            data-student="{{ student.first_name }} {{ student.last_name }}"
-            data-description="{{ fee.description }}"
-          >
-            {{ student.first_name }} {{ student.last_name }} - {{
-            fee.description }} (RM {{ fee.total_fee }})
+        <label for="student" class="form-label">Student</label>
+        <select class="form-select" id="student" name="student_id" required>
+          <option value="" disabled selected>Select Student</option>
+          {% for student in students %}
+          <option value="{{ student.id }}">
+            {{ student.id }} - {{ student.first_name }} {{ student.last_name }}
           </option>
           {% endfor %}
         </select>
       </div>
 
-      <!-- Penalty -->
+      <!-- Fee Structure Selection -->
       <div class="mb-3">
-        <label for="penalty" class="form-label">Penalty (RM)</label>
-        <input
-          type="number"
-          class="form-control"
-          id="penalty"
-          name="penalty"
-          value="0"
-          min="0"
-          step="{{ late_fee_increment }}"
-        />
+        <label for="feeStructure" class="form-label">Fee Structure</label>
+        <select
+          class="form-select"
+          id="feeStructure"
+          name="structure_id"
+          required
+        >
+          <option value="" disabled selected>Select Fee Structure</option>
+          {% for structure in fee_structures %}
+          <option
+            value="{{ structure.structure_id }}"
+            data-fee="{{ structure.total_fee }}"
+          >
+            {{ structure.description }} (RM {{ structure.total_fee }})
+          </option>
+          {% endfor %}
+        </select>
       </div>
 
       <!-- Discount -->
       <div class="mb-3">
         <label for="discount" class="form-label">Discount (RM)</label>
-        <input
-          type="number"
-          class="form-control"
-          id="discount"
-          name="discount"
-          value="0"
-          min="0"
-          step="{{ discount_increment }}"
-        />
+        <div class="input-group">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            id="discountDecrement"
+            style="border-radius: 0; padding: 0.5rem 1rem"
+          >
+            -
+          </button>
+          <input
+            type="text"
+            class="form-control text-center"
+            id="discount"
+            name="discount"
+            value="0"
+            readonly
+            style="max-width: 120px"
+          />
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            id="discountIncrement"
+            style="border-radius: 0; padding: 0.5rem 1rem"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <!-- Penalty -->
+      <div class="mb-3">
+        <label for="penalty" class="form-label">Penalty (RM)</label>
+        <div class="input-group">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            id="penaltyDecrement"
+            style="border-radius: 0; padding: 0.5rem 1rem"
+          >
+            -
+          </button>
+          <input
+            type="text"
+            class="form-control text-center"
+            id="penalty"
+            name="penalty"
+            value="0"
+            readonly
+            style="max-width: 120px"
+          />
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            id="penaltyIncrement"
+            style="border-radius: 0; padding: 0.5rem 1rem"
+          >
+            +
+          </button>
+        </div>
       </div>
 
       <!-- Due Date -->
@@ -117,7 +166,8 @@ endblock %} {% block card_content %}
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    const feeAssignment = document.getElementById("feeAssignment");
+    const studentSelect = document.getElementById("student");
+    const feeStructureSelect = document.getElementById("feeStructure");
     const penalty = document.getElementById("penalty");
     const discount = document.getElementById("discount");
     const dueDate = document.getElementById("dueDate");
@@ -127,17 +177,23 @@ endblock %} {% block card_content %}
     const discountIncrement = parseFloat("{{ discount_increment }}");
 
     function updateSummary() {
-      const selectedAssignment =
-        feeAssignment.options[feeAssignment.selectedIndex];
-      const tuitionFee = selectedAssignment
-        ? parseFloat(selectedAssignment.dataset.fee) || 0
+      // Get selected student details
+      const selectedStudent =
+        studentSelect.options[studentSelect.selectedIndex];
+      const studentName = selectedStudent
+        ? `${selectedStudent.textContent.trim()}`
+        : "-";
+
+      // Get selected fee structure details
+      const selectedStructure =
+        feeStructureSelect.options[feeStructureSelect.selectedIndex];
+      const feeDescription = selectedStructure
+        ? selectedStructure.textContent.trim()
+        : "-";
+      const tuitionFee = selectedStructure
+        ? parseFloat(selectedStructure.dataset.fee) || 0
         : 0;
-      const studentName = selectedAssignment
-        ? selectedAssignment.dataset.student || "-"
-        : "-";
-      const feeDescription = selectedAssignment
-        ? selectedAssignment.dataset.description || "-"
-        : "-";
+
       const penaltyAmount = parseFloat(penalty.value) || 0;
       const discountAmount = parseFloat(discount.value) || 0;
       const totalAmount = Math.max(
@@ -145,6 +201,7 @@ endblock %} {% block card_content %}
         0
       );
 
+      // Update summary display
       document.getElementById("summaryStudent").textContent = studentName;
       document.getElementById("summaryDescription").textContent =
         feeDescription;
@@ -159,39 +216,57 @@ endblock %} {% block card_content %}
         dueDate.value || "-";
     }
 
-    // Update values dynamically when clicking arrow keys
-    penalty.addEventListener("input", updateSummary);
-    discount.addEventListener("input", updateSummary);
-
-    // Ensure penalty increments by lateFeeIncrement
-    penalty.addEventListener("keydown", function (e) {
-      if (e.key === "ArrowUp") {
-        this.value = Math.max(0, parseFloat(this.value) + lateFeeIncrement);
-        updateSummary();
-        e.preventDefault();
-      } else if (e.key === "ArrowDown") {
-        this.value = Math.max(0, parseFloat(this.value) - lateFeeIncrement);
-        updateSummary();
-        e.preventDefault();
+    // Update summary when any relevant field changes
+    [studentSelect, feeStructureSelect, penalty, discount, dueDate].forEach(
+      (input) => {
+        input.addEventListener("input", updateSummary);
       }
-    });
+    );
 
-    // Ensure discount increments by discountIncrement
-    discount.addEventListener("keydown", function (e) {
-      if (e.key === "ArrowUp") {
-        this.value = Math.max(0, parseFloat(this.value) + discountIncrement);
+    // Increment and decrement for penalty
+    document
+      .getElementById("penaltyIncrement")
+      .addEventListener("click", function () {
+        penalty.value = Math.max(
+          0,
+          parseFloat(penalty.value) + lateFeeIncrement
+        );
         updateSummary();
-        e.preventDefault();
-      } else if (e.key === "ArrowDown") {
-        this.value = Math.max(0, parseFloat(this.value) - discountIncrement);
-        updateSummary();
-        e.preventDefault();
-      }
-    });
+      });
 
-    [feeAssignment, dueDate].forEach((input) => {
-      input.addEventListener("input", updateSummary);
-    });
+    document
+      .getElementById("penaltyDecrement")
+      .addEventListener("click", function () {
+        penalty.value = Math.max(
+          0,
+          parseFloat(penalty.value) - lateFeeIncrement
+        );
+        updateSummary();
+      });
+
+    // Increment and decrement for discount
+    document
+      .getElementById("discountIncrement")
+      .addEventListener("click", function () {
+        discount.value = Math.max(
+          0,
+          parseFloat(discount.value) + discountIncrement
+        );
+        updateSummary();
+      });
+
+    document
+      .getElementById("discountDecrement")
+      .addEventListener("click", function () {
+        discount.value = Math.max(
+          0,
+          parseFloat(discount.value) - discountIncrement
+        );
+        updateSummary();
+      });
+
+    // Initialize summary on page load
+    updateSummary();
   });
 </script>
 

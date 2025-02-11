@@ -1,8 +1,11 @@
-{% extends "share/dashboard.html" %}
-{% block title %}Fee Records{% endblock %}
-{% block card_header %}bg-info{% endblock %}
-{% block card_title %}Fee Records{% endblock %}
-{% block card_content %}
+{% extends "share/dashboard.html" %} {% block title %}Fee Records{% endblock %}
+{% block card_header %}bg-info{% endblock %} {% block card_title %}<i
+  class="bi bi-cash-coin"
+></i>
+Fee Record{% endblock %} {% block card_content %}
+
+<h4 class="text-center text-primary">📝 Fee Record</h4>
+<br />
 
 <p>
   Here are the fee records. Payment status is shown based on the amount paid.
@@ -38,10 +41,16 @@
         <th onclick="sortTable(1)">Student ID <i class="fas fa-sort"></i></th>
         <th onclick="sortTable(2)">Student Name <i class="fas fa-sort"></i></th>
         <th>Fee Description</th>
-        <th onclick="sortTable(4)">Tuition Fee (RM) <i class="fas fa-sort"></i></th>
+        <th onclick="sortTable(4)">
+          Tuition Fee (RM) <i class="fas fa-sort"></i>
+        </th>
         <th onclick="sortTable(5)">Penalty (RM) <i class="fas fa-sort"></i></th>
-        <th onclick="sortTable(6)">Discount (RM) <i class="fas fa-sort"></i></th>
-        <th onclick="sortTable(7)">Total Amount (RM) <i class="fas fa-sort"></i></th>
+        <th onclick="sortTable(6)">
+          Discount (RM) <i class="fas fa-sort"></i>
+        </th>
+        <th onclick="sortTable(7)">
+          Total Amount (RM) <i class="fas fa-sort"></i>
+        </th>
         <th onclick="sortTable(8)">Due Date <i class="fas fa-sort"></i></th>
         <th onclick="sortTable(9)">Status</th>
         <th>Actions</th>
@@ -62,30 +71,34 @@
         <td>
           {% if status.status_id == 'status001' %}
           <span class="badge bg-warning">Unpaid</span>
-        {% elif status.status_id == 'status002' %}
+          {% elif status.status_id == 'status002' %}
           <span class="badge bg-success">{{ status.status_name }}</span>
-        {% elif status.status_id == 'status003' %}
+          {% elif status.status_id == 'status003' %}
           <span class="badge bg-danger">{{ status.status_name }}</span>
-        {% else %}
+          {% else %}
           <span class="badge bg-secondary">{{ status.status_name }}</span>
-        {% endif %}
+          {% endif %}
         </td>
         <td>
           <div class="d-flex gap-2">
-            <!-- Edit Button -->
+            <!-- Edit Button (greyed out for paid status) -->
             <a
               href="{{ url_for('accountant.edit_fee_record', fee_record_id=record.fee_record_id) }}"
-              class="btn btn-primary btn-sm"
+              class="btn btn-primary btn-sm {% if status.status_id == 'status002' %}disabled{% endif %}"
               >Edit</a
             >
 
-            <!-- Delete Form -->
+            <!-- Delete Form (greyed out for paid status) -->
             <form
               action="{{ url_for('accountant.delete_fee_record', fee_record_id=record.fee_record_id) }}"
               method="POST"
               class="d-inline"
+              onsubmit="return confirmDelete()"
             >
-              <button type="submit" class="btn btn-danger btn-sm delete-btn">
+              <button
+                type="submit"
+                class="btn btn-danger btn-sm delete-btn {% if status.status_id == 'status002' %}disabled{% endif %}"
+              >
                 Remove
               </button>
             </form>
@@ -180,8 +193,8 @@
 
         // If sorting by currency fields, convert to numbers for accurate sorting
         if (n === 3 || n === 4 || n === 5 || n === 6 || n === 7) {
-          xText = parseFloat(xText.replace('RM', '').trim());
-          yText = parseFloat(yText.replace('RM', '').trim());
+          xText = parseFloat(xText.replace("RM", "").trim());
+          yText = parseFloat(yText.replace("RM", "").trim());
         }
 
         if (dir === "asc") {
@@ -208,6 +221,11 @@
         }
       }
     }
+  }
+
+  // Function to confirm before deleting
+  function confirmDelete() {
+    return confirm("Are you sure you want to delete this fee record?");
   }
 </script>
 
