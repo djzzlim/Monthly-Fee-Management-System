@@ -2,7 +2,6 @@
 from flask import jsonify, session
 from flask_login import login_required, current_user
 from app.models.models import Notification
-from app.routes.routes import role_required, app_name
 from app import db
 from . import parent
 
@@ -57,6 +56,9 @@ def ajax_notifications():
                 </li>
             """
     else:
-        notifications_html = '<p class="alert alert-warning">No notifications available</p>'
-
+        notifications_html = """
+            <div class="alert alert-warning text-center shadow-sm">
+                <i class="bi bi-exclamation-circle"></i> No notifications available.
+            </div>
+        """
     return jsonify({"notifications_html": notifications_html})

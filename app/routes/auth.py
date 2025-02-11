@@ -29,7 +29,7 @@ def login():
         if user:  # Check if user exists
             if user.role_id == '5':
                 flash('Students are not allowed to log in.', 'danger')
-                return render_template('login.html')
+                return render_template('auth/login.html')
 
             if password == user.password:  # Check if passwords match
                 login_user(user)  # Log in the user

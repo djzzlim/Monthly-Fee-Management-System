@@ -2,11 +2,11 @@
 from flask import render_template, redirect, url_for, session, flash, request
 from flask_login import login_required, current_user
 from ..routes import role_required, app_name
-from app.models.models import User, StudentFeeAssignment, FeeRecord, PaymentHistory, Notification, MessageTemplate, ClassAssignment
+from app.models.models import User, StudentFeeAssignment, FeeRecord, PaymentHistory, Notification, MessageTemplate, ClassAssignment, Settings
 import datetime
 import pytz
 import os
-from fpdf import FPDF
+from weasyprint import HTML
 from app import db
 from . import parent
 
@@ -142,96 +142,74 @@ def make_payment():
     except Exception as e:
         db.session.rollback()
         return render_template('error.html', error_message=str(e))
-
-
+    
+    
 def generate_receipt_pdf(payment_history_id, selected_child, fee_record, payment_method):
     try:
-        receipt_folder = os.path.join(os.getcwd(), 'app','archives', 'receipts')
-        if not os.path.exists(receipt_folder):
-            os.makedirs(receipt_folder)
+        # Define the receipt folder path
+        receipt_folder = os.path.abspath(os.path.join(os.getcwd(), 'app', 'archives', 'receipts'))
 
+        # Ensure the directory exists
+        if not os.path.exists(receipt_folder):
+            os.makedirs(receipt_folder, exist_ok=True)
+            print(f"Created folder: {receipt_folder}")
+        else:
+            print(f"Receipt folder exists: {receipt_folder}")
+
+        # Define receipt file path
         receipt_filename = f"receipt_{payment_history_id}.pdf"
         receipt_path = os.path.join(receipt_folder, receipt_filename)
 
-        # Fetch Payment Date from Database (Already in MYT)
+        print(f"Saving receipt at: {receipt_path}")
+
+        # Fetch Payment Date from Database (Ensure it's in MYT)
         payment = db.session.query(PaymentHistory).filter_by(history_id=payment_history_id).first()
-        payment_date_str = payment.payment_date.strftime('%Y-%m-%d %H:%M:%S') 
+        if not payment:
+            print("Error: Payment record not found!")
+            return
 
-        pdf = FPDF()
-        pdf.set_auto_page_break(auto=True, margin=15)
-        pdf.add_page()
+        # Convert payment date to Malaysia Time (MYT)
+        malaysia_tz = pytz.timezone('Asia/Kuala_Lumpur')
+        payment_date = payment.payment_date.astimezone(malaysia_tz)
+        payment_date_str = payment_date.strftime('%Y-%m-%d %H:%M:%S')
 
-        logo_path = os.path.join(os.getcwd(), 'app', 'static', 'logo.png')
-        pdf.image(logo_path, x=10, y=8, w=30)
+        # Fetch school details dynamically
+        kindergarten_name = get_setting("school_name")
+        address = get_setting("address")
+        smtp_email = get_setting("contact_email")
+        contact_number = get_setting("contact_number")
+        logo_path = os.path.abspath(os.path.join(os.getcwd(), 'app', 'static', 'logo.png'))
 
-        pdf.set_font('Arial', 'B', 18)
-        pdf.set_text_color(0, 102, 204)
-        pdf.cell(200, 10, txt="Payment Receipt", ln=True, align='C')
-        pdf.ln(20)
+        print(f"Using logo path: {logo_path}")
 
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Arial', 'B', 12)  
-        pdf.cell(30, 10, "Date:", ln=False)
+        # Render HTML for the receipt
+        rendered_html = render_template(
+            "parent/receipt_pdf.html",
+            receipt_id=payment_history_id,
+            payment_date=payment_date_str,
+            child=selected_child,
+            fee_record=fee_record,
+            payment_method=payment_method,
+            kindergarten_name=kindergarten_name,
+            address=address,
+            smtp_email=smtp_email,
+            contact_number=contact_number,
+            current_year=datetime.datetime.now().year,
+            logo_path=logo_path
+        )
 
-        pdf.set_font('Arial', '', 12)  
-        pdf.cell(70, 10, f"{payment_date_str} MYT", ln=True)
-        
-        pdf.set_font('Arial', 'B', 12)  
-        pdf.cell(40, 10, "Receipt ID:", ln=False)
+        # Save PDF and check if it was created successfully
+        HTML(string=rendered_html).write_pdf(receipt_path)
 
-        pdf.set_font('Arial', '', 12)  
-        pdf.cell(60, 10, f"receipt_{payment_history_id}", ln=True)
-
-        pdf.ln(10)
-
-
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(100, 10, f"Child Name:", ln=False)
-        pdf.set_font('Arial', '', 12)
-        pdf.cell(100, 10, f"{selected_child.first_name} {selected_child.last_name}", ln=True)
-        pdf.ln(5)
-
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(100, 10, f"Fee Description:", ln=False)
-        pdf.set_font('Arial', '', 12)
-        pdf.cell(100, 10, f"{fee_record.assignment.structure.description}", ln=True)
-        pdf.ln(5)
-
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(100, 10, f"Payment Details", ln=True)
-        pdf.set_font('Arial', '', 12)
-
-        pdf.cell(100, 10, f"Amount Due:", ln=False)
-        pdf.cell(100, 10, f"RM {fee_record.amount_due}", ln=True)
-
-        pdf.cell(100, 10, f"Penalty:", ln=False)
-        pdf.cell(100, 10, f"RM {fee_record.late_fee_amount}", ln=True)
-
-        pdf.cell(100, 10, f"Discount:", ln=False)
-        pdf.cell(100, 10, f"RM {fee_record.discount_amount}", ln=True)
-
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(100, 10, f"Total Amount Due:", ln=False)
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(100, 10, f"RM {fee_record.total_amount}", ln=True)
-        pdf.ln(10)
-
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(100, 10, f"Payment Method:", ln=False)
-        pdf.set_font('Arial', '', 12)
-        pdf.cell(100, 10, f"{payment_method}", ln=True)
-        pdf.ln(10)
-
-        pdf.set_font('Arial', 'I', 10)
-        pdf.set_text_color(150, 150, 150)
-        pdf.cell(200, 10, txt="Thank you for your payment!", ln=True, align='C')
-        pdf.ln(5)
-
-        pdf.output(receipt_path)
+        # Verify if the PDF file was created
+        if os.path.exists(receipt_path):
+            print(f"PDF saved successfully: {receipt_path}")
+        else:
+            print(f"Error: PDF file not found after generation! ({receipt_path})")
 
     except Exception as e:
         print(f"Error generating receipt PDF: {str(e)}")
+
+def get_setting(setting_key):
+    setting = Settings.query.filter_by(setting_key=setting_key).first()
+    return setting.setting_value if setting else ""

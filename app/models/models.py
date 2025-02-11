@@ -15,9 +15,12 @@ class Role(db.Model):
     users = relationship('User', back_populates='role')
 
 # User model
+from sqlalchemy.sql import func
+
 class User(UserMixin, db.Model):
     __tablename__ = 'User'
-    id = db.Column('Id', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    
+    id = db.Column('Id', db.String, primary_key=True)
     password = db.Column('Password', db.String, nullable=True)
     role_id = db.Column('RoleId', db.String, ForeignKey('Role.RoleId', ondelete='SET NULL'))
     email = db.Column('Email', db.String, nullable=False)
@@ -35,15 +38,55 @@ class User(UserMixin, db.Model):
     messages_sent = relationship('Notification', back_populates='teacher', foreign_keys='Notification.teacher_id')
     messages_received = relationship('Notification', back_populates='student', foreign_keys='Notification.student_id')
 
+    @staticmethod
+    def generate_user_id():
+        """Generate the next user_id as 'user1', 'user2', etc."""
+        latest_user = db.session.query(User).filter(
+            User.id.like('user%')
+        ).order_by(
+            db.cast(func.substring(User.id, 5), db.Integer).desc()
+        ).first()
+        
+        if latest_user:
+            next_number = int(latest_user.id[4:]) + 1  # Extract number and increment
+        else:
+            next_number = 1  # Start from user1 if no existing records
+
+        return f"user{next_number}"
+
+    def __init__(self, first_name, last_name, email, password=None, role_id=None, date_of_birth=None):
+        self.id = self.generate_user_id()
+        self.first_name = first_name
+        self.last_name = last_name
+        self.email = email
+        self.password = password
+        self.role_id = role_id
+        self.date_of_birth = date_of_birth
+
+
 # Class model
 class Class(db.Model):
     __tablename__ = 'Class'
-    class_id = db.Column('ClassId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    class_id = db.Column('ClassId', db.String, primary_key=True)
     class_name = db.Column('ClassName', db.String, nullable=False)
     description = db.Column('Description', db.String, nullable=True)
 
     # Relationships
     assignments = relationship('ClassAssignment', back_populates='class_')
+
+    # Auto-generate class_id as "class1", "class2", "class3", etc.
+    @staticmethod
+    def generate_class_id():
+        last_class = db.session.query(Class).order_by(db.desc(Class.class_id)).first()
+        if last_class and last_class.class_id.startswith("class"):
+            last_number = int(last_class.class_id.replace("class", ""))
+            return f"class{last_number + 1}"
+        return "class1"
+
+    def __init__(self, class_name, description=None):
+        self.class_id = self.generate_class_id()
+        self.class_name = class_name
+        self.description = description
 
 # ClassAssignment model
 class ClassAssignment(db.Model):
@@ -58,20 +101,35 @@ class ClassAssignment(db.Model):
     teacher = relationship('User', back_populates='class_assignments_teacher', foreign_keys=[teacher_id])
     student = relationship('User', back_populates='class_assignments_student', foreign_keys=[student_id])
 
-# FeeStructure model
 class FeeStructure(db.Model):
     __tablename__ = 'FeeStructure'
-    structure_id = db.Column(
-        'StructureId', 
-        db.String, 
-        primary_key=True, 
-        default=lambda: f"structure-{str(uuid.uuid4())[:8]}"
-    )
+
+    structure_id = db.Column('StructureId', db.String, primary_key=True)
     description = db.Column('Description', db.String, nullable=False)
     total_fee = db.Column('TotalFee', db.Numeric(10, 2), nullable=False)
-    
+
     # Relationships
     student_assignments = relationship('StudentFeeAssignment', back_populates='structure')
+
+    @staticmethod
+    def generate_structure_id():
+        latest_structure = db.session.query(FeeStructure).filter(
+            FeeStructure.structure_id.like('structure%')
+        ).order_by(
+            db.cast(func.substring(FeeStructure.structure_id, 10), db.Integer).desc()
+        ).first()
+        
+        if latest_structure:
+            next_number = int(latest_structure.structure_id[9:]) + 1
+        else:
+            next_number = 1  # Start from structure1 if no existing records
+
+        return f"structure{next_number}"
+
+    def __init__(self, description, total_fee):
+        self.structure_id = self.generate_structure_id()
+        self.description = description
+        self.total_fee = total_fee
 
 # StudentFeeAssignment model
 class StudentFeeAssignment(db.Model):
@@ -107,15 +165,40 @@ class FeeRecord(db.Model):
     payment_histories = relationship('PaymentHistory', back_populates='fee_record')
 
 # ParentStudentRelation model
+from sqlalchemy.sql import func
+
 class ParentStudentRelation(db.Model):
     __tablename__ = 'ParentStudentRelation'
-    relation_id = db.Column('RelationId', db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    
+    relation_id = db.Column('RelationId', db.String, primary_key=True)
     parent_id = db.Column('ParentId', db.String, ForeignKey('User.Id', ondelete='CASCADE'))
     student_id = db.Column('StudentId', db.String, ForeignKey('User.Id', ondelete='CASCADE'))
 
     # Relationships
     parent = relationship('User', back_populates='parent_relations', foreign_keys=[parent_id])
     student = relationship('User', back_populates='student_relations', foreign_keys=[student_id])
+
+    @staticmethod
+    def generate_relation_id():
+        """Generate the next relation_id as 'relation1', 'relation2', etc."""
+        latest_relation = db.session.query(ParentStudentRelation).filter(
+            ParentStudentRelation.relation_id.like('relation%')
+        ).order_by(
+            db.cast(func.substring(ParentStudentRelation.relation_id, 9), db.Integer).desc()
+        ).first()
+        
+        if latest_relation:
+            next_number = int(latest_relation.relation_id[8:]) + 1  # Extract number and increment
+        else:
+            next_number = 1  # Start from relation1 if no existing records
+
+        return f"relation{next_number}"
+
+    def __init__(self, parent_id, student_id):
+        self.relation_id = self.generate_relation_id()
+        self.parent_id = parent_id
+        self.student_id = student_id
+
 
 # PaymentHistory model
 class PaymentHistory(db.Model):

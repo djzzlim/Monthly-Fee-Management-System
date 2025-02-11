@@ -74,9 +74,6 @@ def download_receipt(payment_history_id):
         receipt_filename = f'receipt_{payment_history_id}.pdf'
         receipt_path = os.path.join(receipt_dir, receipt_filename)
 
-        print("Receipt Path:", receipt_path)
-        print("File Exists:", os.path.exists(receipt_path))
-
 
         # Check if the file exists
         if not os.path.exists(receipt_path):

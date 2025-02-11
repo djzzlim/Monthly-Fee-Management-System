@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from app import db
-from app.models.models import User, Role, Settings
+from app.models.models import User, Role, Settings, ParentStudentRelation
 from . import admin
 from app.routes.routes import role_required, app_name
 import uuid
@@ -60,9 +60,7 @@ def add_user():
             password = None
 
         # Generate user ID and create a new user
-        user_id = str(uuid.uuid4())
         new_user = User(
-            id=user_id,
             first_name=first_name,
             last_name=last_name,
             email=email,
@@ -91,6 +89,8 @@ def edit_user(user_id):
     password_policy = password_policy_setting.setting_value if password_policy_setting else 'simple'  # Default to 'simple' if not set
 
     if request.method == 'POST':
+        old_role_id = user.role_id
+
         user.first_name = request.form['first_name']
         user.last_name = request.form['last_name']
         user.email = request.form['email']
@@ -123,6 +123,17 @@ def edit_user(user_id):
         if existing_user and existing_user.id != user.id:
             flash('User with this email already exists!', 'danger')
             return redirect(url_for('admin.edit_user', user_id=user.id))
+
+        # If user was a student and is now NOT a student, remove their parent-student relation
+        if old_role_id == '5' and user.role_id != '5':
+            ParentStudentRelation.query.filter_by(student_id=user.id).delete()
+        
+        # If user was assigned as a student to another parent but is now a parent, remove their parent assignment
+        if old_role_id == '5' and user.role_id == '3':
+            ParentStudentRelation.query.filter_by(student_id=user.id).delete()
+
+        if old_role_id == '3' and user.role_id != '3':
+            ParentStudentRelation.query.filter_by(parent_id=user.id).delete()
 
         db.session.commit()
         return redirect(url_for('admin.manage_users'))

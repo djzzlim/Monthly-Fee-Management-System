@@ -23,7 +23,7 @@ def dashboard():
         # If no children are associated, display an error message
         if not children:
             return render_template(
-                'error.html',
+                'parent/parent.html',
                 error_message="No children are associated with this parent account."
             )
 
