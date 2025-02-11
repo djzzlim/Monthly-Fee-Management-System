@@ -9,9 +9,6 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Function to compress and save the logo
-from PIL import Image
-
 def compress_image(file_path):
     try:
         # Open the image using Pillow
